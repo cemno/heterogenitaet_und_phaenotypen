@@ -13,7 +13,7 @@ library(DescTools)
 library(sp)
 library(sf)
 
-#global environment variables
+#global environment variables 
 threads <- 10
 
 #------------------------------------------------------------
