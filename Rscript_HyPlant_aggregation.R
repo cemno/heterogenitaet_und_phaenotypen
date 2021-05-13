@@ -12,6 +12,10 @@ library(rgdal)
 library(DescTools)
 library(sp)
 library(sf)
+
+#global environment variables
+threads <- 10
+
 #------------------------------------------------------------
 
 # 1. Data preparation
@@ -32,12 +36,14 @@ SIFA <- SIFA[[11]]
 # sorting data
 Plots_sorted <- Plots[order(Plots$PLOTID),] # sort shapefile for PlotID for later ID assignment
 
-beginCluster(10, type = "SOCK", extract)
+# extracting data from a raster file takes rather long, so a cluster is being used to increase thread number.
+beginCluster(threads, type = "SOCK", extract)
 DATA_original <- raster::extract(Raster, Plots_sorted, method='simple', na.rm=TRUE, small=TRUE, df=TRUE, 
                         cellnumbers = T, weights = T)
 DATA <- raster::extract(Raster, Plots_sorted, method='simple', na.rm=TRUE, small=TRUE, df=TRUE, 
                         cellnumbers = TRUE, weights = TRUE, buffer = 1) # extraction of spectrum and cellnumbers
 endCluster()
+
 
 #from spectral subset based on plot boundaries (shapefile) - only pixels having their centroids inside polygons
 DATA <- DATA[,1:1026]
