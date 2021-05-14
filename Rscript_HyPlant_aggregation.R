@@ -12,15 +12,19 @@ library(rgdal)
 library(DescTools)
 library(sp)
 library(sf)
+library(parallel)
 
-#global environment variables
-threads <- 10
+# reset global Enviroment
+# rm(list=ls())
+# opening the cluster
+threads <- 11
+beginCluster(n = threads)
 
 #------------------------------------------------------------
 
 # 1. Data preparation
 #------------------------------------------------------------
-rm(list=ls())
+
 SIFA <- brick("Erfassung_Phänotypen2021/HyPlant data/SIF/20180629-CKA-1115-600-L3-N-FLUO_radiance_SIFO2A_rectified.bil")
 #SIFB <- brick("Erfassung_Phänotypen2021/HyPlant data/SIF/20180629-CKA-1242-350-L2-E-FLUO_radiance_SIFO2B_rectified.bil") # Das hier ist eine andere Höhe
 #Raster <- brick(".../20180629-CKA-1242-350-L2-E-FLUO_radiance_deconv_i1-rect.dat")  #ich konnte die .dat Datei leider nirgends finden.
@@ -36,13 +40,11 @@ SIFA <- SIFA[[11]]
 # sorting data
 Plots_sorted <- Plots[order(Plots$PLOTID),] # sort shapefile for PlotID for later ID assignment
 
-# extracting data from a raster file takes rather long, so a cluster is being used to increase thread number.
-beginCluster(threads, type = "SOCK", extract)
+# extracting data from a raster file
 DATA_original <- raster::extract(Raster, Plots_sorted, method='simple', na.rm=TRUE, small=TRUE, df=TRUE, 
                         cellnumbers = T, weights = T)
 DATA <- raster::extract(Raster, Plots_sorted, method='simple', na.rm=TRUE, small=TRUE, df=TRUE, 
                         cellnumbers = TRUE, weights = TRUE, buffer = 1) # extraction of spectrum and cellnumbers
-endCluster()
 
 
 #from spectral subset based on plot boundaries (shapefile) - only pixels having their centroids inside polygons
@@ -129,3 +131,5 @@ write.xlsx(Final,"....xlsx") # save file
 
 #----------------------------------------------------------
 
+# closing cluster
+endCluster()
