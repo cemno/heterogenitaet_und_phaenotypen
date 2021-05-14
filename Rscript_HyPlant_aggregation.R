@@ -16,9 +16,11 @@ library(parallel)
 
 # reset global Enviroment
 # rm(list=ls())
-# opening the cluster
+
+# opening the cluster, please set thread count to an appropriate number for your machine 
 threads <- 11
 beginCluster(n = threads)
+rm(threads)
 
 #------------------------------------------------------------
 
@@ -41,16 +43,18 @@ SIFA <- SIFA[[11]]
 Plots_sorted <- Plots[order(Plots$PLOTID),] # sort shapefile for PlotID for later ID assignment
 
 # extracting data from a raster file
-DATA_original <- raster::extract(Raster, Plots_sorted, method='simple', na.rm=TRUE, small=TRUE, df=TRUE, 
+DATA_original_extracted <- raster::extract(Raster, Plots_sorted, method='simple', na.rm=TRUE, small=TRUE, df=TRUE, 
                         cellnumbers = T, weights = T)
-DATA <- raster::extract(Raster, Plots_sorted, method='simple', na.rm=TRUE, small=TRUE, df=TRUE, 
+DATA_extracted <- raster::extract(Raster, Plots_sorted, method='simple', na.rm=TRUE, small=TRUE, df=TRUE, 
                         cellnumbers = TRUE, weights = TRUE, buffer = 1) # extraction of spectrum and cellnumbers
 
 
 #from spectral subset based on plot boundaries (shapefile) - only pixels having their centroids inside polygons
-DATA <- DATA[,1:1026]
+# old: DATA <- DATA[,1:1026]
+DATA_original <- DATA_original_extracted[,-1]
+DATA <- DATA_extracted[,-1]
+DATA_original <- as.matrix(sapply(DATA_original, as.numeric)) 
 Data <- as.matrix(sapply(DATA, as.numeric)) 
-
 
 #------------------------------------------------------------
 
@@ -107,7 +111,7 @@ Testpoints <- raster::extract(SIFA, OutliersSHP, method='simple', na.rm=TRUE, sm
 Cells <- Testpoints[,2]
 SIFo2A <- SIFA[[11]]
 SIFo2A[Cells] <- NA
-writeRaster(SIFo2A,"D:/Improvements_Dez2019/HyPlant_Data/Final SIF Values/FirstApproach(Mask)/MaskedRaster_OutlierWeighted_SIFo2A_1115.bil")
+writeRaster(SIFo2A,"Final SIF Values/FirstApproach(Mask)/MaskedRaster_OutlierWeighted_SIFo2A_1115.bil")
 WheightedMeanso2A <- raster::extract(SIFo2A, Plots_sorted, method='simple', fun= mean, na.rm=TRUE, small=TRUE, df=TRUE, 
                                      weights = TRUE, normalizeWeights = TRUE) # extraction of pixel values 
 SDo2A <- raster::extract(SIFo2A, Plots_sorted, method='simple', fun= sd, na.rm=TRUE, small=TRUE, df=TRUE) # extraction of pixel values 
@@ -127,7 +131,7 @@ colnames(Attributes_sorted)[3] <- "Plot ID"  #rename first column
 Final <- cbind(Final, Attributes_sorted[,3:8])
 
 
-write.xlsx(Final,"....xlsx") # save file
+write.xlsx(Final,"final.xlsx") # save file
 
 #----------------------------------------------------------
 
