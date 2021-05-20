@@ -18,7 +18,7 @@ library(parallel)
 # rm(list=ls())
 
 # opening the cluster, please set thread count to an appropriate number for your machine 
-threads <- 11
+threads <- 3
 beginCluster(n = threads)
 rm(threads)
 
@@ -51,8 +51,8 @@ DATA_extracted <- raster::extract(Raster, Plots_sorted, method='simple', na.rm=T
 
 #from spectral subset based on plot boundaries (shapefile) - only pixels having their centroids inside polygons
 # old: DATA <- DATA[,1:1026]
-DATA_original <- DATA_original_extracted[,-1]
-DATA <- DATA_extracted[,-1]
+DATA_original <- DATA_original_extracted[,1:1026] #same as [,-1] (alles außer letzte Spalte)
+DATA <- DATA_extracted[,1:1026]
 DATA_original <- as.matrix(sapply(DATA_original, as.numeric)) 
 Data <- as.matrix(sapply(DATA, as.numeric)) 
 
