@@ -14,7 +14,7 @@ library(sp)
 library(sf)
 library(parallel)
 
-# reset global Enviroment
+# reset global Environment
 # rm(list=ls())
 
 # opening the cluster, please set thread count to an appropriate number for your machine 
