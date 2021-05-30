@@ -21,6 +21,7 @@ raster <- raster::extract(SIF_600_1115_A, plots, cellnumber = TRUE, df = TRUE, w
 raster <- filter(raster, weight == 1)
 
 ## Join raster data and plot data
+# Maybe use left join (or full join?) to get empty rows for plotids that didn't got any cells
 raster <- inner_join(raster, mutate(plots, ID = seq(1:nrow(plots)), .keep = "all"))
 
 ## Count of captured cells per plot
