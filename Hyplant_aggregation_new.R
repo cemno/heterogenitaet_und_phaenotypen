@@ -5,7 +5,7 @@ library(parallel)
 library(sf)
 
 ## Starting Cluster
-threads <- 11
+threads <- 3
 beginCluster(n = threads)
 rm(threads)
 
