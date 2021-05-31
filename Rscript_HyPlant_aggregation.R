@@ -18,7 +18,7 @@ library(parallel)
 # rm(list=ls())
 
 # opening the cluster, please set thread count to an appropriate number for your machine 
-threads <- 3
+threads <- 11
 beginCluster(n = threads)
 rm(threads)
 
@@ -46,15 +46,20 @@ Plots_sorted <- Plots[order(Plots$PLOTID),] # sort shapefile for PlotID for late
 DATA_original_extracted <- raster::extract(Raster, Plots_sorted, method='simple', na.rm=TRUE, small=TRUE, df=TRUE, 
                         cellnumbers = T, weights = T)
 DATA_extracted <- raster::extract(Raster, Plots_sorted, method='simple', na.rm=TRUE, small=TRUE, df=TRUE, 
-                        cellnumbers = TRUE, weights = TRUE, buffer = 1) # extraction of spectrum and cellnumbers
+                        cellnumbers = TRUE, weights = TRUE, normalizeWeights=FALSE) # extraction of spectrum and cellnumbers
 
 
 #from spectral subset based on plot boundaries (shapefile) - only pixels having their centroids inside polygons
 # old: DATA <- DATA[,1:1026]
-DATA_original <- DATA_original_extracted[,1:1026] #same as [,-1] (alles außer letzte Spalte)
-DATA <- DATA_extracted[,1:1026]
+DATA_original <- DATA_original_extracted[,1:1026] #same as [,-1] (alles außer letzte Spalte (was die weights sind))
+#DATA <- DATA_extracted[,1:1026]
 DATA_original <- as.matrix(sapply(DATA_original, as.numeric)) 
-Data <- as.matrix(sapply(DATA, as.numeric)) 
+#Data <- as.matrix(sapply(DATA, as.numeric)) 
+
+# Filter for points with weights == 1
+DATA_extracted <- filter(DATA_extracted, weight == 1)
+test <- data.frame(ID=Plots$PLOTID, DATA_extracted)
+
 
 #------------------------------------------------------------
 
