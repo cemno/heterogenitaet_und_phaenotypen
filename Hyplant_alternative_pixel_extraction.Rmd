@@ -1,0 +1,129 @@
+---
+title: "Hyplant minimalistic approach for pixel extraction"
+author: "Clemens Stephany, Adrian Fülle"
+date: "6/2/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, results = 'hide', message = FALSE)
+library(knitr)
+```
+
+
+## Introduction
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+### Data Extraction in R
+
+The data extraction of raster files is easily done with the help of a few packages. The most important one is the `raster` package, which enables us to parse through the raster file and extract all pixel values within a polygon (or other shapes) provided by a [shapefile](https://en.wikipedia.org/wiki/Shapefile).
+
+#### Loading required libraries
+
+```{r results = 'hide'}
+library(raster)
+library(tidyverse)
+library(parallel)
+library(sf)
+```
+
+#### Starting Cluster
+
+```{r}
+threads <- 3
+beginCluster(n = threads)
+rm(threads)
+```
+
+#### Loading in required files
+
+```{r}
+# SIF Raster
+SIF_600_1115_A <- brick("Erfassung_Phänotypen2021/HyPlant data/SIF/20180629-CKA-1115-600-L3-N-FLUO_radiance_SIFO2A_rectified.bil")
+
+# Plots & Attributes
+plots <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1115_buffered.shp")
+
+# Assign ID
+plots <- mutate(plots, ID = seq(1:nrow(plots)), .keep = "all")
+```
+
+#### Extract Values from SIF map within the shape file filter weights
+
+```{r}
+## Extract Values from SIF_Map within the shape file
+raster_raw <- raster::extract(SIF_600_1115_A, plots, cellnumber = TRUE, df = TRUE, weights = TRUE, normalizeWeights = FALSE)
+# Filter for weights == 1 (cells fully within)
+raster <- filter(raster_raw, weight == 1)
+```
+
+#### Check extracted pixel count per Plot {.tabset}
+
+##### Code
+```{r}
+# Join raster data and plot data
+raster <- left_join(raster, plots, by = "ID")
+
+# Create data frame with pixel count per plot
+frq_pixel <- rename(data.frame(table(raster$PLOTID)), PlotID = Var1)
+frq_pixel$PlotID <- as.numeric(as.character(frq_pixel$PlotID))
+# Get FID to separate between big and small plots. (Only small plots have a FID)
+frq_pixel <- full_join(unique(select(raster, PlotID = PLOTID, Plots = FID)), frq_pixel, by = "PlotID")
+frq_pixel <- mutate(frq_pixel, Plots = if_else(Plots == 0, "3 x 6 m", "3 x 3 m"))
+```
+##### Table
+```{r echo=FALSE, results='markup'}
+kable(rename(summarise(group_by(frq_pixel, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c')
+```
+##### Plot {.active}
+```{r echo=FALSE, results='markup'}
+ggplot(frq_pixel, aes(x = Freq, group = Plots, fill = Plots))+
+  geom_bar(position = "dodge2", width = 0.4)+
+  scale_x_continuous(breaks = seq(0, 10, 2))+
+  xlab("Pixel per plot")+
+  ylab("Occurrences")+
+  ggtitle("Occurrences of pixel count per plot within big and small plots")+
+  theme(legend.position = c(0.9, 0.82), legend.background = element_rect(fill = "white", color = "black"))
+```
+
+
+```{r, echo=FALSE, results='asis'}
+# Check and print plots with no pixels being extracted
+diff = setdiff(unique(raster$ID), seq(1:nrow(plots)))
+if(!is_empty(diff)) print(paste0("No pixel extracted for the following plots: ", diff))
+```
+
+<!--
+# Question: How are smaller pixels (caused by rectification) are handled? Do they count on there own? Or are they part of another pixel?
+# Or does the Picture has unequal pixels in it?
+-->
+
+#### Aggregate Cell Data
+WARNING: Data is multiplied 1000 to transform float values to integer. This explains negative values.
+
+```{r}
+# Calculate mean for all pixels and spectral bands per plot
+bands_mean <- summarise(group_by(raster, PLOTID), across(starts_with("Georef"), mean))
+# Rejoin with attribute table of plots
+raster_mean <- left_join(bands_mean, plots, by = "PLOTID")
+```
+
+```{r}
+# Closing cluster
+endCluster()
+```
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
