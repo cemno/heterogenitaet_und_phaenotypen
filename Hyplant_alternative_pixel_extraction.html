@@ -586,7 +586,7 @@ frq_pixel_normal_1242 &lt;- mutate(frq_pixel_normal_1242, Plots = if_else(Plots 
 bands_mean_minimalistic_1229 &lt;- mutate(normal_1229, across(starts_with(&quot;Georef&quot;), ~ .x / 1000))
 bands_mean_minimalistic_1229 &lt;- summarise(group_by(bands_mean_minimalistic_1229, PLOTID), across(starts_with(&quot;Georef&quot;), mean))
 bands_mean_minimalistic_1242 &lt;- mutate(normal_1242, across(starts_with(&quot;Georef&quot;), ~ .x / 1000))
-bands_mean_minimalistic_1242 &lt;- summarise(group_by(minimalistic_1242, PLOTID), across(starts_with(&quot;Georef&quot;), mean))
+bands_mean_minimalistic_1242 &lt;- summarise(group_by(bands_mean_minimalistic_1242, PLOTID), across(starts_with(&quot;Georef&quot;), mean))
 bands_mean_normal_1229 &lt;- mutate(normal_1229, across(starts_with(&quot;Georef&quot;), ~ (.x/1000)*weight))
 bands_mean_normal_1229 &lt;- summarise(group_by(bands_mean_normal_1229, PLOTID), across(starts_with(&quot;Georef&quot;), sum))
 bands_mean_normal_1242 &lt;- mutate(normal_1242, across(starts_with(&quot;Georef&quot;), ~ (.x/1000)*weight))
@@ -670,16 +670,378 @@ normal_1229_band_760 &lt;- data.frame(select(normal_1229_mean, all_of(general_co
 normal_1242_band_760 &lt;- data.frame(select(normal_1242_mean, all_of(general_columns)),
                                    band_760 = rowMeans(select(normal_1242_mean, all_of(band_760_1242))))</code></pre>
 </div>
-<div id="merging-data" class="section level4">
-<h4>Merging data</h4>
-<pre class="r"><code># Create table for plotting
-comparison_1229_760 &lt;- inner_join(inner_join(FloX_band_760, select(minimalistic_1229_band_760, PLOTID, minimalistic = band_760), by = &quot;PLOTID&quot;),
+<div id="merging-the-datasets" class="section level4 tabset">
+<h4 class="tabset">Merging the datasets</h4>
+<div id="code-to-create-merged-tables" class="section level5">
+<h5>Code to create merged tables</h5>
+<pre class="r"><code>comparison_1229_760 &lt;- inner_join(inner_join(FloX_band_760, select(minimalistic_1229_band_760, PLOTID, minimalistic = band_760), by = &quot;PLOTID&quot;),
                                   select(normal_1229_band_760, PLOTID, normal = band_760), by = &quot;PLOTID&quot;)
 comparison_1242_760 &lt;- inner_join(inner_join(FloX_band_760, select(minimalistic_1242_band_760, PLOTID, minimalistic = band_760), by = &quot;PLOTID&quot;),
                                   select(normal_1242_band_760, PLOTID, normal = band_760), by = &quot;PLOTID&quot;)</code></pre>
 </div>
+<div id="overflight-1229" class="section level5 active">
+<h5 class="active">Overflight 12:29</h5>
+<table>
+<caption>
+Overflight at 12:29 o’clock, Band 760
+</caption>
+<thead>
+<tr>
+<th style="text-align:center;">
+PLOTID
+</th>
+<th style="text-align:center;">
+FloX
+</th>
+<th style="text-align:center;">
+minimalistic
+</th>
+<th style="text-align:center;">
+normal
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center;">
+202
+</td>
+<td style="text-align:center;">
+0.0395738
+</td>
+<td style="text-align:center;">
+2.540710
+</td>
+<td style="text-align:center;">
+2.598050
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+203
+</td>
+<td style="text-align:center;">
+0.0454323
+</td>
+<td style="text-align:center;">
+2.523222
+</td>
+<td style="text-align:center;">
+2.488015
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+205
+</td>
+<td style="text-align:center;">
+0.0392944
+</td>
+<td style="text-align:center;">
+2.282249
+</td>
+<td style="text-align:center;">
+2.347935
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+212
+</td>
+<td style="text-align:center;">
+0.0448193
+</td>
+<td style="text-align:center;">
+2.651995
+</td>
+<td style="text-align:center;">
+2.724895
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+213
+</td>
+<td style="text-align:center;">
+0.0484009
+</td>
+<td style="text-align:center;">
+2.563570
+</td>
+<td style="text-align:center;">
+2.716742
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+215
+</td>
+<td style="text-align:center;">
+0.0517262
+</td>
+<td style="text-align:center;">
+2.641556
+</td>
+<td style="text-align:center;">
+2.667111
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+217
+</td>
+<td style="text-align:center;">
+0.0425124
+</td>
+<td style="text-align:center;">
+2.471704
+</td>
+<td style="text-align:center;">
+2.472185
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+232
+</td>
+<td style="text-align:center;">
+0.0445686
+</td>
+<td style="text-align:center;">
+2.541809
+</td>
+<td style="text-align:center;">
+2.626644
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+233
+</td>
+<td style="text-align:center;">
+0.0562036
+</td>
+<td style="text-align:center;">
+2.528606
+</td>
+<td style="text-align:center;">
+2.658671
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+238
+</td>
+<td style="text-align:center;">
+0.0487543
+</td>
+<td style="text-align:center;">
+2.633788
+</td>
+<td style="text-align:center;">
+2.789388
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+239
+</td>
+<td style="text-align:center;">
+0.0404839
+</td>
+<td style="text-align:center;">
+2.554323
+</td>
+<td style="text-align:center;">
+2.582197
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="overflight-1242" class="section level5">
+<h5>Overflight 12:42</h5>
+<table>
+<caption>
+Overflight at 12:42 o’clock, Band 760
+</caption>
+<thead>
+<tr>
+<th style="text-align:center;">
+PLOTID
+</th>
+<th style="text-align:center;">
+FloX
+</th>
+<th style="text-align:center;">
+minimalistic
+</th>
+<th style="text-align:center;">
+normal
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center;">
+202
+</td>
+<td style="text-align:center;">
+0.0395738
+</td>
+<td style="text-align:center;">
+2.656556
+</td>
+<td style="text-align:center;">
+2.727319
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+203
+</td>
+<td style="text-align:center;">
+0.0454323
+</td>
+<td style="text-align:center;">
+2.796114
+</td>
+<td style="text-align:center;">
+2.877578
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+205
+</td>
+<td style="text-align:center;">
+0.0392944
+</td>
+<td style="text-align:center;">
+2.537651
+</td>
+<td style="text-align:center;">
+2.585997
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+212
+</td>
+<td style="text-align:center;">
+0.0448193
+</td>
+<td style="text-align:center;">
+2.779036
+</td>
+<td style="text-align:center;">
+2.784720
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+213
+</td>
+<td style="text-align:center;">
+0.0484009
+</td>
+<td style="text-align:center;">
+2.753649
+</td>
+<td style="text-align:center;">
+2.899236
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+215
+</td>
+<td style="text-align:center;">
+0.0517262
+</td>
+<td style="text-align:center;">
+2.850224
+</td>
+<td style="text-align:center;">
+2.979635
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+217
+</td>
+<td style="text-align:center;">
+0.0425124
+</td>
+<td style="text-align:center;">
+2.690207
+</td>
+<td style="text-align:center;">
+2.741565
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+232
+</td>
+<td style="text-align:center;">
+0.0445686
+</td>
+<td style="text-align:center;">
+2.688273
+</td>
+<td style="text-align:center;">
+2.724582
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+233
+</td>
+<td style="text-align:center;">
+0.0562036
+</td>
+<td style="text-align:center;">
+2.800706
+</td>
+<td style="text-align:center;">
+2.943046
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+238
+</td>
+<td style="text-align:center;">
+0.0487543
+</td>
+<td style="text-align:center;">
+2.751269
+</td>
+<td style="text-align:center;">
+2.870274
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+239
+</td>
+<td style="text-align:center;">
+0.0404839
+</td>
+<td style="text-align:center;">
+2.766165
+</td>
+<td style="text-align:center;">
+2.730280
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <div id="statistical-analysis" class="section level4">
-<h4>statistical analysis</h4>
+<h4>Statistical analysis</h4>
 <pre class="r"><code># Correlation for 12:29 o&#39;clock
 cor(comparison_1229_760$FloX, comparison_1229_760$minimalistic, method = &quot;spearman&quot;)</code></pre>
 <p>[1] 0.4545455</p>
@@ -687,7 +1049,7 @@ cor(comparison_1229_760$FloX, comparison_1229_760$minimalistic, method = &quot;s
 <p>[1] 0.6727273</p>
 <pre class="r"><code># Correlation for 1242 o&#39;clock
 cor(comparison_1242_760$FloX, comparison_1242_760$minimalistic, method = &quot;spearman&quot;)</code></pre>
-<p>[1] 0.8090909</p>
+<p>[1] 0.7727273</p>
 <pre class="r"><code>cor(comparison_1242_760$FloX, comparison_1242_760$normal, method = &quot;spearman&quot;)</code></pre>
 <p>[1] 0.9090909</p>
 </div>

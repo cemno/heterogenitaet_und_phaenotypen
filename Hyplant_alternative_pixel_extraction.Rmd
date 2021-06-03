@@ -168,7 +168,7 @@ WARNING: Data is multiplied 1000 to transform float values to integer. This expl
 bands_mean_minimalistic_1229 <- mutate(normal_1229, across(starts_with("Georef"), ~ .x / 1000))
 bands_mean_minimalistic_1229 <- summarise(group_by(bands_mean_minimalistic_1229, PLOTID), across(starts_with("Georef"), mean))
 bands_mean_minimalistic_1242 <- mutate(normal_1242, across(starts_with("Georef"), ~ .x / 1000))
-bands_mean_minimalistic_1242 <- summarise(group_by(minimalistic_1242, PLOTID), across(starts_with("Georef"), mean))
+bands_mean_minimalistic_1242 <- summarise(group_by(bands_mean_minimalistic_1242, PLOTID), across(starts_with("Georef"), mean))
 bands_mean_normal_1229 <- mutate(normal_1229, across(starts_with("Georef"), ~ (.x/1000)*weight))
 bands_mean_normal_1229 <- summarise(group_by(bands_mean_normal_1229, PLOTID), across(starts_with("Georef"), sum))
 bands_mean_normal_1242 <- mutate(normal_1242, across(starts_with("Georef"), ~ (.x/1000)*weight))
@@ -259,16 +259,25 @@ normal_1242_band_760 <- data.frame(select(normal_1242_mean, all_of(general_colum
                                    band_760 = rowMeans(select(normal_1242_mean, all_of(band_760_1242))))
 ```
 
-#### Merging data
+#### Merging the datasets {.tabset}
+##### Code to create merged tables
 ```{r}
-# Create table for plotting
 comparison_1229_760 <- inner_join(inner_join(FloX_band_760, select(minimalistic_1229_band_760, PLOTID, minimalistic = band_760), by = "PLOTID"),
                                   select(normal_1229_band_760, PLOTID, normal = band_760), by = "PLOTID")
 comparison_1242_760 <- inner_join(inner_join(FloX_band_760, select(minimalistic_1242_band_760, PLOTID, minimalistic = band_760), by = "PLOTID"),
                                   select(normal_1242_band_760, PLOTID, normal = band_760), by = "PLOTID")
 ```
+##### Overflight 12:29 {.active}
+```{r echo = FALSE, results = "asis"}
+# Create table for plotting
+knitr::kable(comparison_1229_760, format = "html", align = 'c', caption = "Overflight at 12:29 o'clock, Band 760")
+```
+##### Overflight 12:42
+```{r echo = FALSE, results = "asis"}
+knitr::kable(comparison_1242_760, format = "html", align = 'c', caption = "Overflight at 12:42 o'clock, Band 760")
+```
 
-#### statistical analysis
+#### Statistical analysis
 ```{r results = "asis"}
 # Correlation for 12:29 o'clock
 cor(comparison_1229_760$FloX, comparison_1229_760$minimalistic, method = "spearman")
