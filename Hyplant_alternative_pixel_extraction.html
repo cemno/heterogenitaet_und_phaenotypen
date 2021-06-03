@@ -681,12 +681,15 @@ comparison_1242_760 &lt;- inner_join(inner_join(FloX_band_760, select(minimalist
 <div id="statistical-analysis" class="section level4">
 <h4>statistical analysis</h4>
 <pre class="r"><code># Correlation for 12:29 o&#39;clock
-cor(comparison_1229_760$FloX, comparison_1229_760$minimalistic, method = &quot;spearman&quot;)
-cor(comparison_1229_760$FloX, comparison_1229_760$normal, method = &quot;spearman&quot;)
-
-# Correlation for 1242 o&#39;clock
-cor(comparison_1242_760$FloX, comparison_1242_760$minimalistic, method = &quot;spearman&quot;)
-cor(comparison_1242_760$FloX, comparison_1242_760$normal, method = &quot;spearman&quot;)</code></pre>
+cor(comparison_1229_760$FloX, comparison_1229_760$minimalistic, method = &quot;spearman&quot;)</code></pre>
+<p>[1] 0.4545455</p>
+<pre class="r"><code>cor(comparison_1229_760$FloX, comparison_1229_760$normal, method = &quot;spearman&quot;)</code></pre>
+<p>[1] 0.6727273</p>
+<pre class="r"><code># Correlation for 1242 o&#39;clock
+cor(comparison_1242_760$FloX, comparison_1242_760$minimalistic, method = &quot;spearman&quot;)</code></pre>
+<p>[1] 0.8090909</p>
+<pre class="r"><code>cor(comparison_1242_760$FloX, comparison_1242_760$normal, method = &quot;spearman&quot;)</code></pre>
+<p>[1] 0.9090909</p>
 </div>
 <div id="plotting-data" class="section level4">
 <h4>Plotting data</h4>

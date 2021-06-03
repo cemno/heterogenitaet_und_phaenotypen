@@ -269,7 +269,7 @@ comparison_1242_760 <- inner_join(inner_join(FloX_band_760, select(minimalistic_
 ```
 
 #### statistical analysis
-```{r}
+```{r results = "asis"}
 # Correlation for 12:29 o'clock
 cor(comparison_1229_760$FloX, comparison_1229_760$minimalistic, method = "spearman")
 cor(comparison_1229_760$FloX, comparison_1229_760$normal, method = "spearman")
