@@ -278,15 +278,25 @@ knitr::kable(comparison_1242_760, format = "pipe", digits = 2, align = 'c', capt
 ```
 
 #### Statistical analysis
-```{r results = "asis"}
+```{r}
 # Correlation for 12:29 o'clock
-cor(comparison_1229_760$FloX, comparison_1229_760$minimalistic, method = "spearman")
-cor(comparison_1229_760$FloX, comparison_1229_760$normal, method = "spearman")
+cor.flox_min_1229 <- cor(comparison_1229_760$FloX, comparison_1229_760$minimalistic, method = "spearman")
+cor.flox_normal_1229 <- cor(comparison_1229_760$FloX, comparison_1229_760$normal, method = "spearman")
 
 # Correlation for 1242 o'clock
-cor(comparison_1242_760$FloX, comparison_1242_760$minimalistic, method = "spearman")
-cor(comparison_1242_760$FloX, comparison_1242_760$normal, method = "spearman")
+cor.flox_min_1242 <- cor(comparison_1242_760$FloX, comparison_1242_760$minimalistic, method = "spearman")
+cor.flox_normal_1242 <- cor(comparison_1242_760$FloX, comparison_1242_760$normal, method = "spearman")
 ```
+```{r echo = FALSE, results = "asis"}
+knitr::kable(column_to_rownames(tibble(names = c("minimalistic", "normal"), 
+                                       "Overflight at 12:29" = c(cor.flox_min_1229, cor.flox_normal_1229), 
+                                       "Overflight at 12:42" = c(cor.flox_min_1242, cor.flox_normal_1242)),
+                                var = "names"), 
+             format = "pipe", digits = 2, align = 'c', caption = "Correlations between the minimalistic and the normal approch at different overflights (and heights)")
+
+```
+
+
 
 #### Plotting data
 ```{r}
