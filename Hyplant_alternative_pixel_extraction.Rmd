@@ -26,7 +26,7 @@ The data extraction of raster files is easily done with the help of a few packag
 ```{r results = 'hide'}
 library(raster)
 library(tidyverse)
-library(parallel)
+library(snow)
 library(sf)
 ```
 
