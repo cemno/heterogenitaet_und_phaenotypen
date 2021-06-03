@@ -26,13 +26,14 @@ The data extraction of raster files is easily done with the help of a few packag
 ```{r}
 library(raster)
 library(tidyverse)
-library(snow)
 library(sf)
+library(ggpubr)
 ```
 
 #### Starting Cluster
 
 ```{r}
+require(snow)
 threads <- 3
 beginCluster(n = threads)
 rm(threads)
@@ -56,11 +57,18 @@ plots_1242 <- mutate(plots_1242, ID = seq(1:nrow(plots_1242)), .keep = "all")
 
 #### Extract Values from SIF map within the shape file filter weights
 
-```{r}
-## Extract Values from SIF_Map within the shape file
-raster_raw <- raster::extract(SIF_600_1115_A, plots, cellnumber = TRUE, df = TRUE, weights = TRUE, normalizeWeights = FALSE)
-# Filter for weights == 1 (cells fully within)
-raster <- filter(raster_raw, weight == 1)
+```{r cache=TRUE}
+## Extract pixel values from radiance map within the shape file
+minimalistic_1229_raw <- raster::extract(radiance_1229_600, plots_1229, df = TRUE, weights = TRUE, normalizeWeights = FALSE)
+minimalistic_1242_raw <- raster::extract(radiance_1242_350, plots_1242, df = TRUE, weights = TRUE, normalizeWeights = FALSE)
+normal_1229_raw <- raster::extract(radiance_1229_600, plots_1229, df = TRUE, weights = TRUE, normalizeWeights = TRUE)
+normal_1242_raw <- raster::extract(radiance_1242_350, plots_1242, df = TRUE, weights = TRUE, normalizeWeights = TRUE)
+
+# Filter for weights == 1 (cells fully within), no filter for normal approach
+minimalistic_1229 <- filter(minimalistic_1229_raw, weight == 1)
+minimalistic_1242 <- filter(minimalistic_1242_raw, weight == 1)
+normal_1229 <- normal_1229_raw
+normal_1242 <- normal_1242_raw
 ```
 
 #### Check extracted pixel count per Plot {.tabset}
@@ -68,35 +76,86 @@ raster <- filter(raster_raw, weight == 1)
 ##### Code
 ```{r}
 # Join raster data and plot data
-raster <- left_join(raster, plots, by = "ID")
+minimalistic_1229 <- left_join(minimalistic_1229, plots_1229, by = "ID")
+minimalistic_1242 <- left_join(minimalistic_1242, plots_1242, by = "ID")
+normal_1229 <- left_join(normal_1229, plots_1229, by = "ID")
+normal_1242 <- left_join(normal_1242, plots_1242, by = "ID")
 
 # Create data frame with pixel count per plot
-frq_pixel <- rename(data.frame(table(raster$PLOTID)), PlotID = Var1)
-frq_pixel$PlotID <- as.numeric(as.character(frq_pixel$PlotID))
+frq_pixel_minimalistic_1229 <- rename(data.frame(table(minimalistic_1229$PLOTID)), PlotID = Var1)
+frq_pixel_minimalistic_1229$PlotID <- as.numeric(as.character(frq_pixel_minimalistic_1229$PlotID))
+frq_pixel_minimalistic_1242 <- rename(data.frame(table(minimalistic_1242$PLOTID)), PlotID = Var1)
+frq_pixel_minimalistic_1242$PlotID <- as.numeric(as.character(frq_pixel_minimalistic_1242$PlotID))
+frq_pixel_normal_1229 <- rename(data.frame(table(normal_1229$PLOTID)), PlotID = Var1)
+frq_pixel_normal_1229$PlotID <- as.numeric(as.character(frq_pixel_normal_1229$PlotID))
+frq_pixel_normal_1242 <- rename(data.frame(table(normal_1242$PLOTID)), PlotID = Var1)
+frq_pixel_normal_1242$PlotID <- as.numeric(as.character(frq_pixel_normal_1242$PlotID))
+
 # Get FID to separate between big and small plots. (Only small plots have a FID)
-frq_pixel <- full_join(unique(select(raster, PlotID = PLOTID, Plots = FID)), frq_pixel, by = "PlotID")
-frq_pixel <- mutate(frq_pixel, Plots = if_else(Plots == 0, "3 x 6 m", "3 x 3 m"))
+frq_pixel_minimalistic_1229 <- full_join(unique(select(minimalistic_1229, PlotID = PLOTID, Plots = FID)), frq_pixel_minimalistic_1229, by = "PlotID")
+frq_pixel_minimalistic_1229 <- mutate(frq_pixel_minimalistic_1229, Plots = if_else(Plots == 0, "3 x 6 m", "3 x 3 m"))
+frq_pixel_minimalistic_1242 <- full_join(unique(select(minimalistic_1242, PlotID = PLOTID, Plots = FID)), frq_pixel_minimalistic_1242, by = "PlotID")
+frq_pixel_minimalistic_1242 <- mutate(frq_pixel_minimalistic_1242, Plots = if_else(Plots == 0, "3 x 6 m", "3 x 3 m"))
+frq_pixel_normal_1229 <- full_join(unique(select(normal_1229, PlotID = PLOTID, Plots = FID)), frq_pixel_normal_1229, by = "PlotID")
+frq_pixel_normal_1229 <- mutate(frq_pixel_normal_1229, Plots = if_else(Plots == 0, "3 x 6 m", "3 x 3 m"))
+frq_pixel_normal_1242 <- full_join(unique(select(normal_1242, PlotID = PLOTID, Plots = FID)), frq_pixel_normal_1242, by = "PlotID")
+frq_pixel_normal_1242 <- mutate(frq_pixel_normal_1242, Plots = if_else(Plots == 0, "3 x 6 m", "3 x 3 m"))
 ```
 ##### Table
 ```{r echo=FALSE, results='markup'}
-knitr::kable(rename(summarise(group_by(frq_pixel, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c')
+knitr::kable(rename(summarise(group_by(frq_pixel_minimalistic_1229, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c',
+             caption = "Minimalistic pixel extraction, 12:29 Uhr")
+knitr::kable(rename(summarise(group_by(frq_pixel_minimalistic_1242, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c',
+             caption = "Minimalistic pixel extraction, 12:42 Uhr")
+knitr::kable(rename(summarise(group_by(frq_pixel_normal_1229, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c',
+             caption = "Normal pixel extraction, 12:29 Uhr")
+knitr::kable(rename(summarise(group_by(frq_pixel_normal_1242, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c',
+             caption = "Normal pixel extraction, 12:42 Uhr")
 ```
 ##### Plot {.active}
+Occurrences of pixel count per plot within big and small plots
 ```{r echo=FALSE, results='markup'}
-ggplot(frq_pixel, aes(x = Freq, group = Plots, fill = Plots))+
+# Creating plots
+ggplot_minimalistic_1229 <- ggplot(frq_pixel_minimalistic_1229, aes(x = Freq, group = Plots, fill = Plots))+
   geom_bar(position = "dodge2", width = 0.4)+
   scale_x_continuous(breaks = seq(0, 10, 2))+
   xlab("Pixel per plot")+
-  ylab("Occurrences")+
-  ggtitle("Occurrences of pixel count per plot within big and small plots")+
-  theme(legend.position = c(0.9, 0.82), legend.background = element_rect(fill = "white", color = "black"))
+  ylab("Occurrences")
+  #theme(legend.position = c(0.9, 0.82), legend.background = element_rect(fill = "white", color = "black"))
+ggplot_minimalistic_1242 <- ggplot(frq_pixel_minimalistic_1242, aes(x = Freq, group = Plots, fill = Plots))+
+  geom_bar(position = "dodge2", width = 0.4)+
+  #scale_x_continuous(breaks = seq(0, 10, 2))+
+  xlab("Pixel per plot")+
+  ylab("Occurrences")
+  #theme(legend.position = c(0.9, 0.82), legend.background = element_rect(fill = "white", color = "black"))
+ggplot_normal_1229 <- ggplot(frq_pixel_normal_1229, aes(x = Freq, group = Plots, fill = Plots))+
+  geom_bar(position = "dodge2", width = 0.4)+
+  #scale_x_continuous(breaks = seq(0, 10, 2))+
+  xlab("Pixel per plot")+
+  ylab("Occurrences")
+  #theme(legend.position = c(0.9, 0.82), legend.background = element_rect(fill = "white", color = "black"))
+ggplot_normal_1242 <- ggplot(frq_pixel_normal_1242, aes(x = Freq, group = Plots, fill = Plots))+
+  geom_bar(position = "dodge2", width = 0.4)+
+  #scale_x_continuous(breaks = seq(0, 10, 2))+
+  xlab("Pixel per plot")+
+  ylab("Occurrences")
+  #theme(legend.position = c(0.9, 0.82), legend.background = element_rect(fill = "white", color = "black"))
+
+# Arranging plots
+ggarrange(ggplot_minimalistic_1229, ggplot_minimalistic_1242, ggplot_normal_1229, ggplot_normal_1242, labels = c("Minimalistic, 12:29 Uhr", "Minimalistic, 12:42 Uhr", "     Normal, 12:29 Uhr", "         Normal, 12:42"), ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom", widths = c(100,100), heights = c(100,100))
 ```
 
 <!--Warning mechanism if any Plots don't have a single pixel -->
 ```{r, echo=FALSE, results='asis'}
 # Check and print plots with no pixels being extracted
-diff = setdiff(unique(raster$ID), seq(1:nrow(plots)))
-if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for the following plots: ", diff))
+diff = setdiff(unique(minimalistic_1229$ID), seq(1:nrow(plots_1229)))
+if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plots in minimalistic at 12:29 o'clock: ", diff))
+diff = setdiff(unique(minimalistic_1242$ID), seq(1:nrow(plots_1242)))
+if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plots in minimalistic at 12:42 o'clock: ", diff))
+diff = setdiff(unique(normal_1229$ID), seq(1:nrow(plots_1229)))
+if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plots:  in normal at 12:29 o'clock:", diff))
+diff = setdiff(unique(normal_1242$ID), seq(1:nrow(plots_1242)))
+if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plots in normal at 12:42 o'clock: ", diff))
 ```
 
 <!--
@@ -109,15 +168,24 @@ WARNING: Data is multiplied 1000 to transform float values to integer. This expl
 
 ```{r}
 # Calculate mean for all pixels and spectral bands per plot
-bands_mean <- summarise(group_by(raster, PLOTID), across(starts_with("Georef"), mean))
+bands_mean_minimalistic_1229 <- mutate(normal_1229, across(starts_with("Georef"), ~ .x / 1000))
+bands_mean_minimalistic_1229 <- summarise(group_by(bands_mean_minimalistic_1229, PLOTID), across(starts_with("Georef"), mean))
+bands_mean_minimalistic_1242 <- mutate(normal_1242, across(starts_with("Georef"), ~ .x / 1000))
+bands_mean_minimalistic_1242 <- summarise(group_by(minimalistic_1242, PLOTID), across(starts_with("Georef"), mean))
+bands_mean_normal_1229 <- mutate(normal_1229, across(starts_with("Georef"), ~ (.x/1000)*weight))
+bands_mean_normal_1229 <- summarise(group_by(bands_mean_normal_1229, PLOTID), across(starts_with("Georef"), sum))
+bands_mean_normal_1242 <- mutate(normal_1242, across(starts_with("Georef"), ~ (.x/1000)*weight))
+bands_mean_normal_1242 <- summarise(group_by(bands_mean_normal_1242, PLOTID), across(starts_with("Georef"), sum))
 # Rejoin with attribute table of plots
-raster_mean <- left_join(bands_mean, plots, by = "PLOTID")
+minimalistic_1229_mean <- left_join(bands_mean_minimalistic_1229, plots_1229, by = "PLOTID")
+minimalistic_1242_mean <- left_join(bands_mean_minimalistic_1242, plots_1242, by = "PLOTID")
+normal_1229_mean <- left_join(bands_mean_normal_1229, plots_1229, by = "PLOTID")
+normal_1242_mean <- left_join(bands_mean_normal_1242, plots_1242, by = "PLOTID")
 ```
 
 #### Closing Cluster
 One should always close the Cluster at the end.
 ```{r}
-# Closing cluster
 endCluster()
 ```
 
@@ -139,16 +207,23 @@ FloX <- read_excel("Erfassung_Phänotypen2021/FloX_Reflected_Radiance_180629.xls
 FloX$`datetime [UTC]` <- with_tz(FloX$`datetime [UTC]`, "CET")
 FloX <- rename(FloX, datetime = `datetime [UTC]`)
 
-tmp <- filter(select(FloX, datetime, Plot), Plot < 400 & Plot != "Soil")
-tmp <- tmp[!duplicated(tmp$Plot),]
+# Check for viable FloX data within +- 1h flight time.
+viable_flox <- filter(select(FloX, datetime, Plot), Plot < 400 & Plot != "Soil")
+viable_flox <- viable_flox[!duplicated(viable_flox$Plot),]
+
+# Reducing FloX data to plots that meet the requirement
+viable_flox <- filter(viable_flox, datetime >= as.POSIXct("2018-06-29 11:37:00", tz = "CET") & 
+                        datetime <= as.POSIXct("2018-06-29 13:24:00", tz = "CET"))
+FloX <- filter(FloX, Plot %in% viable_flox$Plot)
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+
+
+
+
+
