@@ -267,14 +267,14 @@ comparison_1229_760 <- inner_join(inner_join(FloX_band_760, select(minimalistic_
 comparison_1242_760 <- inner_join(inner_join(FloX_band_760, select(minimalistic_1242_band_760, PLOTID, minimalistic = band_760), by = "PLOTID"),
                                   select(normal_1242_band_760, PLOTID, normal = band_760), by = "PLOTID")
 ```
-##### Overflight 12:29 {.active}
+##### Low resolution {.active}
 ```{r echo = FALSE, results = "asis"}
 # Create table for plotting
-knitr::kable(comparison_1229_760, format = "html", align = 'c', caption = "Overflight at 12:29 o'clock, Band 760")
+knitr::kable(comparison_1229_760, format = "pipe", digits = 2, align = 'c', caption = "Overflight at 12:29 o'clock, Band 760")
 ```
-##### Overflight 12:42
+##### High resolution
 ```{r echo = FALSE, results = "asis"}
-knitr::kable(comparison_1242_760, format = "html", align = 'c', caption = "Overflight at 12:42 o'clock, Band 760")
+knitr::kable(comparison_1242_760, format = "pipe", digits = 2, align = 'c', caption = "Overflight at 12:42 o'clock, Band 760")
 ```
 
 #### Statistical analysis
