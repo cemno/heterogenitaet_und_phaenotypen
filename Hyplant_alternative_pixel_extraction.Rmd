@@ -215,8 +215,75 @@ viable_flox <- viable_flox[!duplicated(viable_flox$Plot),]
 viable_flox <- filter(viable_flox, datetime >= as.POSIXct("2018-06-29 11:37:00", tz = "CET") & 
                         datetime <= as.POSIXct("2018-06-29 13:24:00", tz = "CET"))
 FloX <- filter(FloX, Plot %in% viable_flox$Plot)
+
+# Calculate mean for plots
+FloX_mean <- summarise(group_by(FloX, Plot), across(!c("doy.dayfract", "datetime"), mean))
+
+# Computing mean of bands around 760 nm (+- 0.5)
+band_760_FloX <- c("759.61145939999994",	"759.76608999999996",	"759.92068659999995",	"760.07524899999999",	"760.22977730000002",	"760.38427160000003")
+FloX_band_760 <- data.frame(select(FloX_mean, PLOTID = Plot),
+                                   FloX = rowMeans(select(FloX_mean, band_760_FloX)))
+FloX_band_760$PLOTID <- as.numeric(FloX_band_760$PLOTID)
 ```
 
+#### Prepare Hyplant data
+```{r}
+
+# Columns to extract for 760 nm band and additional information
+general_columns <- c("PLOTID", "ID", "FLEX_SAMPL","VARIETY", "VARNAME", "DENSTYPE", "DENSITY")
+band_760_1229 <- c("Georef..Band.822.20180629.CKA.1229.600.L3.N.FLUO_radiance_deconv_i1.dat...759.530029.", 
+                   "Georef..Band.823.20180629.CKA.1229.600.L3.N.FLUO_radiance_deconv_i1.dat...759.640015.",
+                   "Georef..Band.824.20180629.CKA.1229.600.L3.N.FLUO_radiance_deconv_i1.dat...759.750000.",
+                   "Georef..Band.825.20180629.CKA.1229.600.L3.N.FLUO_radiance_deconv_i1.dat...759.859985.", 
+                   "Georef..Band.826.20180629.CKA.1229.600.L3.N.FLUO_radiance_deconv_i1.dat...759.969971.", 
+                   "Georef..Band.827.20180629.CKA.1229.600.L3.N.FLUO_radiance_deconv_i1.dat...760.080017.", 
+                   "Georef..Band.828.20180629.CKA.1229.600.L3.N.FLUO_radiance_deconv_i1.dat...760.190002.",
+                   "Georef..Band.829.20180629.CKA.1229.600.L3.N.FLUO_radiance_deconv_i1.dat...760.299988.",
+                   "Georef..Band.830.20180629.CKA.1229.600.L3.N.FLUO_radiance_deconv_i1.dat...760.409973.")
+band_760_1242 <- c("Georef..Band.822.20180629.CKA.1242.350.L2.E.FLUO_radiance_deconv_i1.dat...759.530029.", 
+                   "Georef..Band.823.20180629.CKA.1242.350.L2.E.FLUO_radiance_deconv_i1.dat...759.640015.", 
+                   "Georef..Band.824.20180629.CKA.1242.350.L2.E.FLUO_radiance_deconv_i1.dat...759.750000.", 
+                   "Georef..Band.825.20180629.CKA.1242.350.L2.E.FLUO_radiance_deconv_i1.dat...759.859985.", 
+                   "Georef..Band.826.20180629.CKA.1242.350.L2.E.FLUO_radiance_deconv_i1.dat...759.969971.", 
+                   "Georef..Band.827.20180629.CKA.1242.350.L2.E.FLUO_radiance_deconv_i1.dat...760.080017.", 
+                   "Georef..Band.828.20180629.CKA.1242.350.L2.E.FLUO_radiance_deconv_i1.dat...760.190002.",
+                   "Georef..Band.829.20180629.CKA.1242.350.L2.E.FLUO_radiance_deconv_i1.dat...760.299988.",
+                   "Georef..Band.830.20180629.CKA.1242.350.L2.E.FLUO_radiance_deconv_i1.dat...760.409973.")
+
+
+# Computing mean of bands around 760 nm (+- 0.5)
+minimalistic_1229_band_760 <- data.frame(select(minimalistic_1229_mean, general_columns), 
+                                         band_760 = rowMeans(select(minimalistic_1229_mean, band_760_1229)))
+minimalistic_1242_band_760 <- data.frame(select(minimalistic_1242_mean, general_columns), 
+                                         band_760 = rowMeans(select(minimalistic_1242_mean, band_760_1242)))
+normal_1229_band_760 <- data.frame(select(normal_1229_mean, general_columns),
+                                   band_760 = rowMeans(select(normal_1229_mean, band_760_1229)))
+normal_1242_band_760 <- data.frame(select(normal_1242_mean, general_columns),
+                                   band_760 = rowMeans(select(normal_1242_mean, band_760_1242)))
+```
+
+#### Plotting data
+```{r}
+# Create table for plotting
+comparison_1229_760 <- inner_join(inner_join(FloX_band_760, select(minimalistic_1229_band_760, PLOTID, minimalistic = band_760), by = "PLOTID"),
+                                  select(normal_1229_band_760, PLOTID, normal = band_760), by = "PLOTID")
+comparison_1242_760 <- inner_join(inner_join(FloX_band_760, select(minimalistic_1242_band_760, PLOTID, minimalistic = band_760), by = "PLOTID"),
+                                  select(normal_1242_band_760, PLOTID, normal = band_760), by = "PLOTID")
+
+# Correlation for 12:29 o'clock
+cor(comparison_1229_760$FloX, comparison_1229_760$minimalistic, method = "spearman")
+cor(comparison_1229_760$FloX, comparison_1229_760$normal, method = "spearman")
+
+# Correlation for 1242 o'clock
+cor(comparison_1242_760$FloX, comparison_1242_760$minimalistic, method = "spearman")
+cor(comparison_1242_760$FloX, comparison_1242_760$normal, method = "spearman")
+
+
+ggplot(comparison_1229_760, aes(x = FloX))+
+  geom_point(aes(y = normal), colour = "red")+
+  geom_point(aes(y = minimalistic), colour = "blue")
+
+```
 
 
 
