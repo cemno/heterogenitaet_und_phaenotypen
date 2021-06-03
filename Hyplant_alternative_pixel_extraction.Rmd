@@ -13,9 +13,6 @@ library(knitr)
 
 ## Introduction
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 ### Data Extraction in R
 
@@ -222,7 +219,7 @@ FloX_mean <- summarise(group_by(FloX, Plot), across(!c("doy.dayfract", "datetime
 # Computing mean of bands around 760 nm (+- 0.5)
 band_760_FloX <- c("759.61145939999994",	"759.76608999999996",	"759.92068659999995",	"760.07524899999999",	"760.22977730000002",	"760.38427160000003")
 FloX_band_760 <- data.frame(select(FloX_mean, PLOTID = Plot),
-                                   FloX = rowMeans(select(FloX_mean, band_760_FloX)))
+                                   FloX = rowMeans(select(FloX_mean, all_of(band_760_FloX))))
 FloX_band_760$PLOTID <- as.numeric(FloX_band_760$PLOTID)
 ```
 
@@ -252,24 +249,27 @@ band_760_1242 <- c("Georef..Band.822.20180629.CKA.1242.350.L2.E.FLUO_radiance_de
 
 
 # Computing mean of bands around 760 nm (+- 0.5)
-minimalistic_1229_band_760 <- data.frame(select(minimalistic_1229_mean, general_columns), 
-                                         band_760 = rowMeans(select(minimalistic_1229_mean, band_760_1229)))
-minimalistic_1242_band_760 <- data.frame(select(minimalistic_1242_mean, general_columns), 
-                                         band_760 = rowMeans(select(minimalistic_1242_mean, band_760_1242)))
-normal_1229_band_760 <- data.frame(select(normal_1229_mean, general_columns),
-                                   band_760 = rowMeans(select(normal_1229_mean, band_760_1229)))
-normal_1242_band_760 <- data.frame(select(normal_1242_mean, general_columns),
-                                   band_760 = rowMeans(select(normal_1242_mean, band_760_1242)))
+minimalistic_1229_band_760 <- data.frame(select(minimalistic_1229_mean, all_of(general_columns)), 
+                                         band_760 = rowMeans(select(minimalistic_1229_mean, all_of(band_760_1229))))
+minimalistic_1242_band_760 <- data.frame(select(minimalistic_1242_mean, all_of(general_columns)), 
+                                         band_760 = rowMeans(select(minimalistic_1242_mean, all_of(band_760_1242))))
+normal_1229_band_760 <- data.frame(select(normal_1229_mean, all_of(general_columns)),
+                                   band_760 = rowMeans(select(normal_1229_mean, all_of(band_760_1229))))
+normal_1242_band_760 <- data.frame(select(normal_1242_mean, all_of(general_columns)),
+                                   band_760 = rowMeans(select(normal_1242_mean, all_of(band_760_1242))))
 ```
 
-#### Plotting data
+#### Merging data
 ```{r}
 # Create table for plotting
 comparison_1229_760 <- inner_join(inner_join(FloX_band_760, select(minimalistic_1229_band_760, PLOTID, minimalistic = band_760), by = "PLOTID"),
                                   select(normal_1229_band_760, PLOTID, normal = band_760), by = "PLOTID")
 comparison_1242_760 <- inner_join(inner_join(FloX_band_760, select(minimalistic_1242_band_760, PLOTID, minimalistic = band_760), by = "PLOTID"),
                                   select(normal_1242_band_760, PLOTID, normal = band_760), by = "PLOTID")
+```
 
+#### statistical analysis
+```{r}
 # Correlation for 12:29 o'clock
 cor(comparison_1229_760$FloX, comparison_1229_760$minimalistic, method = "spearman")
 cor(comparison_1229_760$FloX, comparison_1229_760$normal, method = "spearman")
@@ -277,12 +277,13 @@ cor(comparison_1229_760$FloX, comparison_1229_760$normal, method = "spearman")
 # Correlation for 1242 o'clock
 cor(comparison_1242_760$FloX, comparison_1242_760$minimalistic, method = "spearman")
 cor(comparison_1242_760$FloX, comparison_1242_760$normal, method = "spearman")
+```
 
-
+#### Plotting data
+```{r}
 ggplot(comparison_1229_760, aes(x = FloX))+
   geom_point(aes(y = normal), colour = "red")+
   geom_point(aes(y = minimalistic), colour = "blue")
-
 ```
 
 
