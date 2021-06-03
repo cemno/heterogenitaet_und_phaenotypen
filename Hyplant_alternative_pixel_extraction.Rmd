@@ -23,7 +23,7 @@ The data extraction of raster files is easily done with the help of a few packag
 
 #### Loading required libraries
 
-```{r results = 'hide'}
+```{r}
 library(raster)
 library(tidyverse)
 library(snow)
@@ -41,14 +41,17 @@ rm(threads)
 #### Loading in required files
 
 ```{r}
-# SIF Raster
-SIF_600_1115_A <- brick("Erfassung_Phänotypen2021/HyPlant data/SIF/20180629-CKA-1115-600-L3-N-FLUO_radiance_SIFO2A_rectified.bil")
+# Radiance Raster
+radiance_1229_600 <- brick("Erfassung_Phänotypen2021/HyPlant data/12:29/20180629-CKA-1229-600-L3-N-FLUO_radiance_deconv_i1-subset.bil")
+radiance_1242_350 <- brick("Erfassung_Phänotypen2021/HyPlant data/12:42/20180629-CKA-1242-350-L2-E-FLUO_radiance_deconv_i1-rect-subset.bil")
 
 # Plots & Attributes
-plots <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1115_buffered.shp")
+plots_1229 <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1229_buffered.shp")
+plots_1242 <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1242_buffered.shp")
 
 # Assign ID
-plots <- mutate(plots, ID = seq(1:nrow(plots)), .keep = "all")
+plots_1229 <- mutate(plots_1229, ID = seq(1:nrow(plots_1229)), .keep = "all")
+plots_1242 <- mutate(plots_1242, ID = seq(1:nrow(plots_1242)), .keep = "all")
 ```
 
 #### Extract Values from SIF map within the shape file filter weights
@@ -76,7 +79,7 @@ frq_pixel <- mutate(frq_pixel, Plots = if_else(Plots == 0, "3 x 6 m", "3 x 3 m")
 ```
 ##### Table
 ```{r echo=FALSE, results='markup'}
-kable(rename(summarise(group_by(frq_pixel, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c')
+knitr::kable(rename(summarise(group_by(frq_pixel, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c')
 ```
 ##### Plot {.active}
 ```{r echo=FALSE, results='markup'}
@@ -89,11 +92,11 @@ ggplot(frq_pixel, aes(x = Freq, group = Plots, fill = Plots))+
   theme(legend.position = c(0.9, 0.82), legend.background = element_rect(fill = "white", color = "black"))
 ```
 
-
+<!--Warning mechanism if any Plots don't have a single pixel -->
 ```{r, echo=FALSE, results='asis'}
 # Check and print plots with no pixels being extracted
 diff = setdiff(unique(raster$ID), seq(1:nrow(plots)))
-if(!is_empty(diff)) print(paste0("No pixel extracted for the following plots: ", diff))
+if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for the following plots: ", diff))
 ```
 
 <!--
@@ -111,11 +114,33 @@ bands_mean <- summarise(group_by(raster, PLOTID), across(starts_with("Georef"), 
 raster_mean <- left_join(bands_mean, plots, by = "PLOTID")
 ```
 
+#### Closing Cluster
+One should always close the Cluster at the end.
 ```{r}
 # Closing cluster
 endCluster()
 ```
 
+
+### Analysis
+
+#### Loading required libraries
+```{r}
+library(lubridate)
+library(readxl)
+library(tidyverse)
+```
+
+#### FloX data
+
+```{r}
+# Import FloX data
+FloX <- read_excel("Erfassung_Phänotypen2021/FloX_Reflected_Radiance_180629.xlsx")
+FloX$`datetime [UTC]` <- with_tz(FloX$`datetime [UTC]`, "CET")
+FloX <- rename(FloX, datetime = `datetime [UTC]`)
+
+tmp <- filter(select(FloX, datetime, Plot), Plot < 400 & Plot != "Soil")
+tmp <- tmp[!duplicated(tmp$Plot),]
 ```
 
 ## Including Plots
