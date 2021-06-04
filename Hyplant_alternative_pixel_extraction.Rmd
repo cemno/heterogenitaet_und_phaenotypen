@@ -165,9 +165,9 @@ WARNING: Data is multiplied 1000 to transform float values to integer. This expl
 
 ```{r}
 # Calculate mean for all pixels and spectral bands per plot
-bands_mean_minimalistic_1229 <- mutate(normal_1229, across(starts_with("Georef"), ~ .x / 1000))
+bands_mean_minimalistic_1229 <- mutate(normal_1229, across(starts_with("Georef"), ~ .x / 10000))
 bands_mean_minimalistic_1229 <- summarise(group_by(bands_mean_minimalistic_1229, PLOTID), across(starts_with("Georef"), mean))
-bands_mean_minimalistic_1242 <- mutate(normal_1242, across(starts_with("Georef"), ~ .x / 1000))
+bands_mean_minimalistic_1242 <- mutate(normal_1242, across(starts_with("Georef"), ~ .x / 10000))
 bands_mean_minimalistic_1242 <- summarise(group_by(bands_mean_minimalistic_1242, PLOTID), across(starts_with("Georef"), mean))
 bands_mean_normal_1229 <- mutate(normal_1229, across(starts_with("Georef"), ~ (.x/1000)*weight))
 bands_mean_normal_1229 <- summarise(group_by(bands_mean_normal_1229, PLOTID), across(starts_with("Georef"), sum))
