@@ -280,19 +280,19 @@ knitr::kable(comparison_1242_760, format = "pipe", digits = 2, align = 'c', capt
 #### Statistical analysis
 ```{r}
 # Correlation for 12:29 o'clock
-cor.flox_min_1229 <- cor(comparison_1229_760$FloX, comparison_1229_760$minimalistic, method = "spearman")
-cor.flox_normal_1229 <- cor(comparison_1229_760$FloX, comparison_1229_760$normal, method = "spearman")
+cor.flox_min_1229 <- cor(comparison_1229_760$FloX, comparison_1229_760$minimalistic, method = "pearson")
+cor.flox_normal_1229 <- cor(comparison_1229_760$FloX, comparison_1229_760$normal, method = "pearson")
 
 # Correlation for 1242 o'clock
-cor.flox_min_1242 <- cor(comparison_1242_760$FloX, comparison_1242_760$minimalistic, method = "spearman")
-cor.flox_normal_1242 <- cor(comparison_1242_760$FloX, comparison_1242_760$normal, method = "spearman")
+cor.flox_min_1242 <- cor(comparison_1242_760$FloX, comparison_1242_760$minimalistic, method = "pearson")
+cor.flox_normal_1242 <- cor(comparison_1242_760$FloX, comparison_1242_760$normal, method = "pearson")
 ```
 ```{r echo = FALSE, results = "asis"}
 knitr::kable(column_to_rownames(tibble(names = c("minimalistic", "normal"), 
-                                       "Overflight at 12:29" = c(cor.flox_min_1229, cor.flox_normal_1229), 
-                                       "Overflight at 12:42" = c(cor.flox_min_1242, cor.flox_normal_1242)),
+                                       "Overflight at 12:29" = c(cor.flox_min_1229**2, cor.flox_normal_1229**2), 
+                                       "Overflight at 12:42" = c(cor.flox_min_1242**2, cor.flox_normal_1242**2)),
                                 var = "names"), 
-             format = "pipe", digits = 2, align = 'c', caption = "Correlations between the minimalistic and the normal approch at different overflights (and heights)")
+             format = "pipe", digits = 2, align = 'c', caption = "Correlation of determination between the minimalistic and the normal approch at different overflights (and heights)")
 
 ```
 
@@ -300,7 +300,7 @@ knitr::kable(column_to_rownames(tibble(names = c("minimalistic", "normal"),
 
 #### Plotting data
 ```{r}
-ggplot(comparison_1229_760, aes(x = FloX))+
+ggplot(comparison_1242_760, aes(x = FloX, size = PLOTID))+
   geom_point(aes(y = normal), colour = "red")+
   geom_point(aes(y = minimalistic), colour = "blue")
 ```
