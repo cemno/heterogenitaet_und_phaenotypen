@@ -292,7 +292,7 @@ knitr::kable(column_to_rownames(tibble(names = c("minimalistic", "normal"),
                                        "Overflight at 12:29" = c(cor.flox_min_1229**2, cor.flox_normal_1229**2), 
                                        "Overflight at 12:42" = c(cor.flox_min_1242**2, cor.flox_normal_1242**2)),
                                 var = "names"), 
-             format = "pipe", digits = 2, align = 'c', caption = "Correlation of determination between the minimalistic and the normal approch at different overflights (and heights)")
+             format = "pipe", digits = 2, align = 'c', caption = "Coeffient of determination between the minimalistic and the normal approch at different overflights (and heights)")
 
 ```
 
