@@ -1,0 +1,316 @@
+---
+title: "Hyplant minimalistic approach for pixel extraction"
+author: "Clemens Stephany, Adrian Fülle"
+date: "6/2/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, results = 'hide', message = FALSE)
+library(knitr)
+```
+
+
+## Introduction
+
+
+### Data Extraction in R
+
+The data extraction of raster files is easily done with the help of a few packages. The most important one is the `raster` package, which enables us to parse through the raster file and extract all pixel values within a polygon (or other shapes) provided by a [shapefile](https://en.wikipedia.org/wiki/Shapefile).
+
+#### Loading required libraries
+
+```{r}
+library(raster)
+library(tidyverse)
+library(sf)
+library(ggpubr)
+```
+
+#### Starting Cluster
+
+```{r}
+require(snow)
+threads <- 3
+beginCluster(n = threads)
+rm(threads)
+```
+
+#### Loading in required files
+
+```{r}
+# Radiance Raster
+radiance_1229_600 <- brick("Erfassung_Phänotypen2021/HyPlant data/12:29/20180629-CKA-1229-600-L3-N-FLUO_radiance_deconv_i1-subset.bil")
+radiance_1242_350 <- brick("Erfassung_Phänotypen2021/HyPlant data/12:42/20180629-CKA-1242-350-L2-E-FLUO_radiance_deconv_i1-rect-subset.bil")
+
+# Plots & Attributes
+plots_1229 <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1229_buffered.shp")
+plots_1242 <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1242_buffered.shp")
+
+# Assign ID
+plots_1229 <- mutate(plots_1229, ID = seq(1:nrow(plots_1229)), .keep = "all")
+plots_1242 <- mutate(plots_1242, ID = seq(1:nrow(plots_1242)), .keep = "all")
+```
+
+#### Extract Values from SIF map within the shape file filter weights
+
+```{r cache=TRUE}
+## Extract pixel values from radiance map within the shape file
+minimalistic_1229_raw <- raster::extract(radiance_1229_600, plots_1229, df = TRUE, weights = TRUE, normalizeWeights = FALSE)
+minimalistic_1242_raw <- raster::extract(radiance_1242_350, plots_1242, df = TRUE, weights = TRUE, normalizeWeights = FALSE)
+normal_1229_raw <- raster::extract(radiance_1229_600, plots_1229, df = TRUE, weights = TRUE, normalizeWeights = TRUE)
+normal_1242_raw <- raster::extract(radiance_1242_350, plots_1242, df = TRUE, weights = TRUE, normalizeWeights = TRUE)
+
+# Filter for weights == 1 (cells fully within), no filter for normal approach
+minimalistic_1229 <- filter(minimalistic_1229_raw, weight == 1)
+minimalistic_1242 <- filter(minimalistic_1242_raw, weight == 1)
+normal_1229 <- normal_1229_raw
+normal_1242 <- normal_1242_raw
+```
+
+#### Check extracted pixel count per Plot {.tabset}
+
+##### Code
+```{r}
+# Join raster data and plot data
+minimalistic_1229 <- left_join(minimalistic_1229, plots_1229, by = "ID")
+minimalistic_1242 <- left_join(minimalistic_1242, plots_1242, by = "ID")
+normal_1229 <- left_join(normal_1229, plots_1229, by = "ID")
+normal_1242 <- left_join(normal_1242, plots_1242, by = "ID")
+
+# Create data frame with pixel count per plot
+frq_pixel_minimalistic_1229 <- rename(data.frame(table(minimalistic_1229$PLOTID)), PlotID = Var1)
+frq_pixel_minimalistic_1229$PlotID <- as.numeric(as.character(frq_pixel_minimalistic_1229$PlotID))
+frq_pixel_minimalistic_1242 <- rename(data.frame(table(minimalistic_1242$PLOTID)), PlotID = Var1)
+frq_pixel_minimalistic_1242$PlotID <- as.numeric(as.character(frq_pixel_minimalistic_1242$PlotID))
+frq_pixel_normal_1229 <- rename(data.frame(table(normal_1229$PLOTID)), PlotID = Var1)
+frq_pixel_normal_1229$PlotID <- as.numeric(as.character(frq_pixel_normal_1229$PlotID))
+frq_pixel_normal_1242 <- rename(data.frame(table(normal_1242$PLOTID)), PlotID = Var1)
+frq_pixel_normal_1242$PlotID <- as.numeric(as.character(frq_pixel_normal_1242$PlotID))
+
+# Get FID to separate between big and small plots. (Only small plots have a FID)
+frq_pixel_minimalistic_1229 <- full_join(unique(select(minimalistic_1229, PlotID = PLOTID, Plots = FID)), frq_pixel_minimalistic_1229, by = "PlotID")
+frq_pixel_minimalistic_1229 <- mutate(frq_pixel_minimalistic_1229, Plots = if_else(Plots == 0, "3 x 6 m", "3 x 3 m"))
+frq_pixel_minimalistic_1242 <- full_join(unique(select(minimalistic_1242, PlotID = PLOTID, Plots = FID)), frq_pixel_minimalistic_1242, by = "PlotID")
+frq_pixel_minimalistic_1242 <- mutate(frq_pixel_minimalistic_1242, Plots = if_else(Plots == 0, "3 x 6 m", "3 x 3 m"))
+frq_pixel_normal_1229 <- full_join(unique(select(normal_1229, PlotID = PLOTID, Plots = FID)), frq_pixel_normal_1229, by = "PlotID")
+frq_pixel_normal_1229 <- mutate(frq_pixel_normal_1229, Plots = if_else(Plots == 0, "3 x 6 m", "3 x 3 m"))
+frq_pixel_normal_1242 <- full_join(unique(select(normal_1242, PlotID = PLOTID, Plots = FID)), frq_pixel_normal_1242, by = "PlotID")
+frq_pixel_normal_1242 <- mutate(frq_pixel_normal_1242, Plots = if_else(Plots == 0, "3 x 6 m", "3 x 3 m"))
+```
+##### Table
+```{r echo=FALSE, results='markup'}
+knitr::kable(rename(summarise(group_by(frq_pixel_minimalistic_1229, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c',
+             caption = "Minimalistic pixel extraction, 12:29 Uhr")
+knitr::kable(rename(summarise(group_by(frq_pixel_minimalistic_1242, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c',
+             caption = "Minimalistic pixel extraction, 12:42 Uhr")
+knitr::kable(rename(summarise(group_by(frq_pixel_normal_1229, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c',
+             caption = "Normal pixel extraction, 12:29 Uhr")
+knitr::kable(rename(summarise(group_by(frq_pixel_normal_1242, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c',
+             caption = "Normal pixel extraction, 12:42 Uhr")
+```
+##### Plot {.active}
+Occurrences of pixel count per plot within big and small plots
+```{r echo=FALSE, results='markup'}
+# Creating plots
+ggplot_minimalistic_1229 <- ggplot(frq_pixel_minimalistic_1229, aes(x = Freq, group = Plots, fill = Plots))+
+  geom_bar(position = "dodge2", width = 0.4)+
+  scale_x_continuous(breaks = seq(0, 10, 2))+
+  xlab("Pixel per plot")+
+  ylab("Occurrences")
+  #theme(legend.position = c(0.9, 0.82), legend.background = element_rect(fill = "white", color = "black"))
+ggplot_minimalistic_1242 <- ggplot(frq_pixel_minimalistic_1242, aes(x = Freq, group = Plots, fill = Plots))+
+  geom_bar(position = "dodge2", width = 0.4)+
+  #scale_x_continuous(breaks = seq(0, 10, 2))+
+  xlab("Pixel per plot")+
+  ylab("Occurrences")
+  #theme(legend.position = c(0.9, 0.82), legend.background = element_rect(fill = "white", color = "black"))
+ggplot_normal_1229 <- ggplot(frq_pixel_normal_1229, aes(x = Freq, group = Plots, fill = Plots))+
+  geom_bar(position = "dodge2", width = 0.4)+
+  #scale_x_continuous(breaks = seq(0, 10, 2))+
+  xlab("Pixel per plot")+
+  ylab("Occurrences")
+  #theme(legend.position = c(0.9, 0.82), legend.background = element_rect(fill = "white", color = "black"))
+ggplot_normal_1242 <- ggplot(frq_pixel_normal_1242, aes(x = Freq, group = Plots, fill = Plots))+
+  geom_bar(position = "dodge2", width = 0.4)+
+  #scale_x_continuous(breaks = seq(0, 10, 2))+
+  xlab("Pixel per plot")+
+  ylab("Occurrences")
+  #theme(legend.position = c(0.9, 0.82), legend.background = element_rect(fill = "white", color = "black"))
+
+# Arranging plots
+ggarrange(ggplot_minimalistic_1229, ggplot_minimalistic_1242, ggplot_normal_1229, ggplot_normal_1242, labels = c("Minimalistic, 12:29 Uhr", "Minimalistic, 12:42 Uhr", "     Normal, 12:29 Uhr", "         Normal, 12:42"), ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom", widths = c(100,100), heights = c(100,100))
+```
+
+<!--Warning mechanism if any Plots don't have a single pixel -->
+```{r, echo=FALSE, results='asis'}
+# Check and print plots with no pixels being extracted
+diff = setdiff(unique(minimalistic_1229$ID), seq(1:nrow(plots_1229)))
+if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plots in minimalistic at 12:29 o'clock: ", diff))
+diff = setdiff(unique(minimalistic_1242$ID), seq(1:nrow(plots_1242)))
+if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plots in minimalistic at 12:42 o'clock: ", diff))
+diff = setdiff(unique(normal_1229$ID), seq(1:nrow(plots_1229)))
+if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plots:  in normal at 12:29 o'clock:", diff))
+diff = setdiff(unique(normal_1242$ID), seq(1:nrow(plots_1242)))
+if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plots in normal at 12:42 o'clock: ", diff))
+```
+
+<!--
+# Question: How are smaller pixels (caused by rectification) are handled? Do they count on there own? Or are they part of another pixel?
+# Or does the Picture has unequal pixels in it?
+-->
+
+#### Aggregate Cell Data
+WARNING: Data is multiplied 1000 to transform float values to integer. This explains negative values.
+
+```{r}
+# Calculate mean for all pixels and spectral bands per plot
+bands_mean_minimalistic_1229 <- mutate(normal_1229, across(starts_with("Georef"), ~ .x / 10000))
+bands_mean_minimalistic_1229 <- summarise(group_by(bands_mean_minimalistic_1229, PLOTID), across(starts_with("Georef"), mean))
+bands_mean_minimalistic_1242 <- mutate(normal_1242, across(starts_with("Georef"), ~ .x / 10000))
+bands_mean_minimalistic_1242 <- summarise(group_by(bands_mean_minimalistic_1242, PLOTID), across(starts_with("Georef"), mean))
+bands_mean_normal_1229 <- mutate(normal_1229, across(starts_with("Georef"), ~ (.x/10000)*weight))
+bands_mean_normal_1229 <- summarise(group_by(bands_mean_normal_1229, PLOTID), across(starts_with("Georef"), sum))
+bands_mean_normal_1242 <- mutate(normal_1242, across(starts_with("Georef"), ~ (.x/10000)*weight))
+bands_mean_normal_1242 <- summarise(group_by(bands_mean_normal_1242, PLOTID), across(starts_with("Georef"), sum))
+# Rejoin with attribute table of plots
+minimalistic_1229_mean <- left_join(bands_mean_minimalistic_1229, plots_1229, by = "PLOTID")
+minimalistic_1242_mean <- left_join(bands_mean_minimalistic_1242, plots_1242, by = "PLOTID")
+normal_1229_mean <- left_join(bands_mean_normal_1229, plots_1229, by = "PLOTID")
+normal_1242_mean <- left_join(bands_mean_normal_1242, plots_1242, by = "PLOTID")
+```
+
+#### Closing Cluster
+One should always close the Cluster at the end.
+```{r}
+endCluster()
+```
+
+
+### Analysis
+
+#### Loading required libraries
+```{r}
+library(lubridate)
+library(readxl)
+library(tidyverse)
+```
+
+#### FloX data
+
+```{r}
+# Import FloX data
+FloX <- read_excel("Erfassung_Phänotypen2021/FloX_Reflected_Radiance_180629.xlsx")
+FloX$`datetime [UTC]` <- with_tz(FloX$`datetime [UTC]`, "CET")
+FloX <- rename(FloX, datetime = `datetime [UTC]`)
+
+# Check for viable FloX data within +- 1h flight time.
+viable_flox <- filter(select(FloX, datetime, Plot), Plot < 400 & Plot != "Soil")
+viable_flox <- viable_flox[!duplicated(viable_flox$Plot),]
+
+# Reducing FloX data to plots that meet the requirement
+viable_flox <- filter(viable_flox, datetime >= as.POSIXct("2018-06-29 11:37:00", tz = "CET") & 
+                        datetime <= as.POSIXct("2018-06-29 13:24:00", tz = "CET"))
+FloX <- filter(FloX, Plot %in% viable_flox$Plot)
+
+# Calculate mean for plots
+FloX_mean <- summarise(group_by(FloX, Plot), across(!c("doy.dayfract", "datetime"), mean))
+
+# Computing mean of bands around 760 nm (+- 0.5)
+band_760_FloX <- c("759.61145939999994",	"759.76608999999996",	"759.92068659999995",	"760.07524899999999",	"760.22977730000002",	"760.38427160000003")
+FloX_band_760 <- data.frame(select(FloX_mean, PLOTID = Plot),
+                                   FloX = rowMeans(select(FloX_mean, all_of(band_760_FloX))))
+FloX_band_760$PLOTID <- as.numeric(FloX_band_760$PLOTID)
+```
+
+#### Prepare Hyplant data
+```{r}
+
+# Columns to extract for 760 nm band and additional information
+general_columns <- c("PLOTID", "ID", "FLEX_SAMPL","VARIETY", "VARNAME", "DENSTYPE", "DENSITY")
+band_760_1229 <- c("Georef..Band.822.20180629.CKA.1229.600.L3.N.FLUO_radiance_deconv_i1.dat...759.530029.", 
+                   "Georef..Band.823.20180629.CKA.1229.600.L3.N.FLUO_radiance_deconv_i1.dat...759.640015.",
+                   "Georef..Band.824.20180629.CKA.1229.600.L3.N.FLUO_radiance_deconv_i1.dat...759.750000.",
+                   "Georef..Band.825.20180629.CKA.1229.600.L3.N.FLUO_radiance_deconv_i1.dat...759.859985.", 
+                   "Georef..Band.826.20180629.CKA.1229.600.L3.N.FLUO_radiance_deconv_i1.dat...759.969971.", 
+                   "Georef..Band.827.20180629.CKA.1229.600.L3.N.FLUO_radiance_deconv_i1.dat...760.080017.", 
+                   "Georef..Band.828.20180629.CKA.1229.600.L3.N.FLUO_radiance_deconv_i1.dat...760.190002.",
+                   "Georef..Band.829.20180629.CKA.1229.600.L3.N.FLUO_radiance_deconv_i1.dat...760.299988.",
+                   "Georef..Band.830.20180629.CKA.1229.600.L3.N.FLUO_radiance_deconv_i1.dat...760.409973.")
+band_760_1242 <- c("Georef..Band.822.20180629.CKA.1242.350.L2.E.FLUO_radiance_deconv_i1.dat...759.530029.", 
+                   "Georef..Band.823.20180629.CKA.1242.350.L2.E.FLUO_radiance_deconv_i1.dat...759.640015.", 
+                   "Georef..Band.824.20180629.CKA.1242.350.L2.E.FLUO_radiance_deconv_i1.dat...759.750000.", 
+                   "Georef..Band.825.20180629.CKA.1242.350.L2.E.FLUO_radiance_deconv_i1.dat...759.859985.", 
+                   "Georef..Band.826.20180629.CKA.1242.350.L2.E.FLUO_radiance_deconv_i1.dat...759.969971.", 
+                   "Georef..Band.827.20180629.CKA.1242.350.L2.E.FLUO_radiance_deconv_i1.dat...760.080017.", 
+                   "Georef..Band.828.20180629.CKA.1242.350.L2.E.FLUO_radiance_deconv_i1.dat...760.190002.",
+                   "Georef..Band.829.20180629.CKA.1242.350.L2.E.FLUO_radiance_deconv_i1.dat...760.299988.",
+                   "Georef..Band.830.20180629.CKA.1242.350.L2.E.FLUO_radiance_deconv_i1.dat...760.409973.")
+
+
+# Computing mean of bands around 760 nm (+- 0.5)
+minimalistic_1229_band_760 <- data.frame(select(minimalistic_1229_mean, all_of(general_columns)), 
+                                         band_760 = rowMeans(select(minimalistic_1229_mean, all_of(band_760_1229))))
+minimalistic_1242_band_760 <- data.frame(select(minimalistic_1242_mean, all_of(general_columns)), 
+                                         band_760 = rowMeans(select(minimalistic_1242_mean, all_of(band_760_1242))))
+normal_1229_band_760 <- data.frame(select(normal_1229_mean, all_of(general_columns)),
+                                   band_760 = rowMeans(select(normal_1229_mean, all_of(band_760_1229))))
+normal_1242_band_760 <- data.frame(select(normal_1242_mean, all_of(general_columns)),
+                                   band_760 = rowMeans(select(normal_1242_mean, all_of(band_760_1242))))
+```
+
+#### Merging the datasets {.tabset}
+##### Code to create merged tables
+```{r}
+comparison_1229_760 <- inner_join(inner_join(FloX_band_760, select(minimalistic_1229_band_760, PLOTID, minimalistic = band_760), by = "PLOTID"),
+                                  select(normal_1229_band_760, PLOTID, normal = band_760), by = "PLOTID")
+comparison_1242_760 <- inner_join(inner_join(FloX_band_760, select(minimalistic_1242_band_760, PLOTID, minimalistic = band_760), by = "PLOTID"),
+                                  select(normal_1242_band_760, PLOTID, normal = band_760), by = "PLOTID")
+```
+##### Low resolution {.active}
+```{r echo = FALSE, results = "asis"}
+# Create table for plotting
+knitr::kable(comparison_1229_760, format = "pipe", digits = 2, align = 'c', caption = "Overflight at 12:29 o'clock, Band 760")
+```
+##### High resolution
+```{r echo = FALSE, results = "asis"}
+knitr::kable(comparison_1242_760, format = "pipe", digits = 2, align = 'c', caption = "Overflight at 12:42 o'clock, Band 760")
+```
+
+#### Statistical analysis
+```{r}
+# Correlation for 12:29 o'clock
+cor.flox_min_1229 <- cor(comparison_1229_760$FloX, comparison_1229_760$minimalistic, method = "pearson")
+cor.flox_normal_1229 <- cor(comparison_1229_760$FloX, comparison_1229_760$normal, method = "pearson")
+
+# Correlation for 1242 o'clock
+cor.flox_min_1242 <- cor(comparison_1242_760$FloX, comparison_1242_760$minimalistic, method = "pearson")
+cor.flox_normal_1242 <- cor(comparison_1242_760$FloX, comparison_1242_760$normal, method = "pearson")
+```
+```{r echo = FALSE, results = "asis"}
+knitr::kable(column_to_rownames(tibble(names = c("minimalistic", "normal"), 
+                                       "Overflight at 12:29" = c(cor.flox_min_1229**2, cor.flox_normal_1229**2), 
+                                       "Overflight at 12:42" = c(cor.flox_min_1242**2, cor.flox_normal_1242**2)),
+                                var = "names"), 
+             format = "pipe", digits = 2, align = 'c', caption = "Coeffient of determination between the minimalistic and the normal approch at different overflights (and heights)")
+
+```
+
+
+
+#### Plotting data
+```{r}
+ggplot(comparison_1242_760, aes(x = FloX, size = PLOTID))+
+  geom_point(aes(y = normal), colour = "red")+
+  geom_point(aes(y = minimalistic), colour = "blue")
+```
+
+
+
+
+
+
+
+
+
+
