@@ -222,6 +222,7 @@ library(lubridate)
 library(readxl)
 library(tidyverse)
 library(hyperSpec)
+library(factoextra)
 ```
 
 #### FloX data
@@ -335,6 +336,11 @@ plot(spc_1242_normal [,,], "spcprctl5")
 title(main="normal, 12:42 o'clock")
 mtext("Top-of-canopy radiance DUAL", outer=TRUE,  cex=1.2, line=1.5)
 
+
+#test <- spc_1229_normal / rowMeans(spc_1229_normal)
+#plot(test, "spcprctl5")
+#plot(spc_1229_normal, "spcprctl5")
+
 # plot(spc_1229_minimalistic [,,])
 # plot(spc_1229_minimalistic_new [,,])
 # spc_1229_minimalistic_new@wavelength
@@ -375,7 +381,53 @@ mtext("Top-of-canopy radiance DUAL\n(normalized against FloX)", outer=TRUE,  cex
 # ggplot (as.long.df (spc_1229_minimalistic_new[1]), aes (x = .wavelength, y =spc)) + geom_line ()
 
 ```
+#### Principal Conponent Analysis (PCA)
+The idea is to reduce the data in there dimensions and detect where the largest variation lies. By comparing the principal components of the FloX and the HyPlant we can detect whether both sensors captured the same variation and which approach is best suited for data extraction.
+```{r}
+pca_1229_minimalistic <- prcomp(spc_1229_minimalistic, center = TRUE)
+pca_1229_normal <- prcomp(spc_1229_normal, center = TRUE)
+pca_1242_minimalistic <- prcomp(spc_1242_minimalistic, center = TRUE)
+pca_1242_normal <- prcomp(spc_1242_normal, center = TRUE)
 
+
+#fviz_eig(pca_1229_minimalistic)
+par(mar = c(4,6,1,0)+.1, mfrow = c(2,2), oma = c(1,1,4,1), yaxs = "r")
+fviz_pca_ind(pca_1229_minimalistic,
+             col.ind = "cos2", # Colour by the quality of representation
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             title = "PCA: Low resolution, minimalistic", # with quality of representation # Avoid text overlapping
+             repel = TRUE     # Avoid text overlapping
+)
+fviz_pca_ind(pca_1229_normal,
+             col.ind = "cos2", # Colour by the quality of representation
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             title = "PCA: Low resolution, normal", # with quality of representation # Avoid text overlapping
+             repel = TRUE     # Avoid text overlapping
+)
+fviz_pca_ind(pca_1242_minimalistic,
+             col.ind = "cos2", # Colour by the quality of representation
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             title = "PCA: High resolution, minimalistic", # with quality of representation # Avoid text overlapping
+             repel = TRUE     # Avoid text overlapping
+)
+fviz_pca_ind(pca_1242_normal,
+             col.ind = "cos2", # Colour by the quality of representation
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             title = "PCA: High resolution, normal", # with quality of representation # Avoid text overlapping
+             repel = TRUE,    # Avoid text overlapping
+             addEllipsis = TRUE
+)
+
+# fviz_pca_ind(pca_1229_minimalistic,
+#              col.ind = Varieties, # colour by groups
+#              palette = "Dark2",
+#              addEllipses = TRUE, # Concentration ellipses
+#              legend.title = "Varieties",
+#              repel = TRUE,
+#              title= "Grouping of different crops"
+# )
+
+```
 
 
 
