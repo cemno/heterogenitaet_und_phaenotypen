@@ -385,11 +385,12 @@ mtext("Top-of-canopy radiance DUAL\n(normalized against FloX)", outer=TRUE,  cex
 The idea is to reduce the data in their dimensions and detect where the largest variation lies. By comparing the principal components of the FloX and the HyPlant we can detect whether both sensors captured the same variation and which approach is best suited for data extraction.
 ```{r}
 pca_flox <- prcomp(spc_flox, scale = TRUE)
-pca_1229_minimalistic <- prcomp(as. (spc_1229_minimalistic), scale = TRUE)
+pca_1229_minimalistic <- prcomp(select(as.long.df(spc_1229_minimalistic), !c("PLOTID")), scale = TRUE)
 pca_1229_normal <- prcomp(spc_1229_normal, scale = TRUE)
 pca_1242_minimalistic <- prcomp(spc_1242_minimalistic, scale = TRUE)
 pca_1242_normal <- prcomp(spc_1242_normal, scale = TRUE)
 pca_1229_minimalistic
+as.long.df(spc_1229_minimalistic)
 #fviz_eig(pca_1229_minimalistic)
 par(mar = c(4,6,1,0)+.1, mfrow = c(2,2), oma = c(1,1,4,1), yaxs = "r")
 fviz_pca_var(pca_flox,
