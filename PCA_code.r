@@ -4,10 +4,10 @@ library(stats)
 
 #Preparation
 #____________________________________________________________
-DATA <- read("...")
+DATA <- read.csv("PCA.csv")
 # column 1: Plot ID + Aggregation code, #colum 2 - 627: Bands, #column 628 - xxx: further information
 
-
+make.names(DATA[,1], unique=TRUE)
 rownames(DATA) = make.names(DATA[,1], unique=TRUE)
 DATA[,1] <- NULL
 

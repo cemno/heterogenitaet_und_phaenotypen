@@ -259,6 +259,7 @@ spc_flox <- spc.loess(spc_flox_raw, seq(390, 940, 1)) # sequence of wavelength
 # Transfrom hyperSpec back to data frame
 spc_flox_df <- as.wide.df(spc_flox)
 colnames(spc_flox_df) <- append("PlotID", as.character(seq(390, 940, 1)))
+spc_flox_df$PlotID <- paste0(as.character(spc_flox_df$PlotID), "_flox") 
 
 # Plot spectral wave
 par(mar = c(5,6,3,1)+.1)
@@ -303,15 +304,19 @@ spc_1242_normal <- spc.loess(spc_1242_normal_raw, seq(390, 940, 1))
 # Transform hyperSpec back to data frame
 spc_1229_minimalistic_df <- as.wide.df(spc_1229_minimalistic)
 colnames(spc_1229_minimalistic_df) <- append("PlotID", as.character(seq(390, 940, 1)))
+spc_1229_minimalistic_df$PlotID <- paste0(as.character(spc_1229_minimalistic_df$PlotID), "_1229_minimalistic") 
 
 spc_1242_minimalistic_df <- as.wide.df(spc_1242_minimalistic)
 colnames(spc_1242_minimalistic_df) <- append("PlotID", as.character(seq(390, 940, 1)))
+spc_1242_minimalistic_df$PlotID <- paste0(as.character(spc_1242_minimalistic_df$PlotID), "_1242_minimalistic") 
 
 spc_1229_normal_df <- as.wide.df(spc_1229_normal)
 colnames(spc_1229_normal_df) <- append("PlotID", as.character(seq(390, 940, 1)))
+spc_1229_normal_df$PlotID <- paste0(as.character(spc_1229_normal_df$PlotID), "_1229_normal") 
 
 spc_1242_normal_df <- as.wide.df(spc_1242_normal)
 colnames(spc_1242_normal_df) <- append("PlotID", as.character(seq(390, 940, 1)))
+spc_1242_normal_df$PlotID <- paste0(as.character(spc_1242_normal_df$PlotID), "_1242_normal") 
 
 ```
 
@@ -390,11 +395,18 @@ pca_1229_normal <- prcomp(spc_1229_normal, scale = TRUE)
 pca_1242_minimalistic <- prcomp(spc_1242_minimalistic, scale = TRUE)
 pca_1242_normal <- prcomp(spc_1242_normal, scale = TRUE)
 
+fviz_eig(pca_flox, title = "PCA: FloX")
 fviz_eig(pca_1229_minimalistic, title = "PCA: Low resolution, minimalistic")
 fviz_eig(pca_1229_normal, title = "PCA: Low resolution, normal")
 fviz_eig(pca_1242_minimalistic, title = "PCA: High resolution, minimalistic")
 fviz_eig(pca_1242_normal, title = "PCA: High resolution, normal")
 
+fviz_pca_ind(pca_flox,
+             col.ind = "cos2", # Colour by the quality of representation
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             title = "PCA: FloX", # with quality of representation # Avoid text overlapping
+             repel = TRUE     # Avoid text overlapping
+)
 fviz_pca_ind(pca_1229_minimalistic,
              col.ind = "cos2", # Colour by the quality of representation
              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
@@ -432,7 +444,43 @@ fviz_pca_ind(pca_1242_normal,
 
 ```
 
+```{r}
+pca_data_1229 <- rbind(spc_flox_df, spc_1229_minimalistic_df, spc_1229_normal_df)
+pca_data_1242 <- rbind(spc_flox_df, spc_1242_minimalistic_df, spc_1242_normal_df)
+pca_data_all <- rbind(spc_flox_df, spc_1229_minimalistic_df, spc_1229_normal_df, spc_1242_minimalistic_df, spc_1242_normal_df)
 
+
+rownames(pca_data_1229) = make.names(pca_data_1229[,1], unique=TRUE)
+pca_1229 <- prcomp(pca_data_1229[,-1], scale = TRUE)
+
+summary(pca_1229)
+
+fviz_eig(pca_1229, title = "PCA: FloX")
+fviz_pca_ind(pca_1229)
+
+rownames(pca_data_1242) = make.names(pca_data_1242[,1], unique=TRUE)
+pca_1242 <- prcomp(pca_data_1242[,-1], scale = TRUE)
+
+summary(pca_1242)
+
+fviz_eig(pca_1242, title = "PCA: FloX")
+fviz_pca_ind(pca_1242)
+
+rownames(pca_data_all) = make.names(pca_data_all[,1], unique=TRUE)
+pca_all <- prcomp(pca_data_all[,-1], scale = TRUE)
+
+summary(pca_all)
+res.ind <- get_pca_ind(pca_all)
+res.ind
+Coor <- res.ind$coord
+Coor <- as.data.frame(Coor)[,c(1,2)]
+fviz_pca_ind(pca_all)
+summary(Coor)
+Coor[0,3] <- row.names(Coor)
+
+#whats needed?
+#metric to compare flox and hyplant data. current one would be difference (-) between plots of flox and hyplant of the corr
+```
 
 
 
