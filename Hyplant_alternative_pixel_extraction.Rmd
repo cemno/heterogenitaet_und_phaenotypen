@@ -240,8 +240,8 @@ viable_flox <- filter(select(FloX, datetime, Plot), Plot < 400 & Plot != "Soil")
 viable_flox <- viable_flox[!duplicated(viable_flox$Plot),]
 
 # Reducing FloX data to plots that meet the requirement
-viable_flox <- filter(viable_flox, datetime >= as.POSIXct("2018-06-29 11:37:00", tz = "CET") & 
-                        datetime <= as.POSIXct("2018-06-29 13:24:00", tz = "CET"))
+#viable_flox <- filter(viable_flox, datetime >= as.POSIXct("2018-06-29 11:37:00", tz = "CET") & 
+#                        datetime <= as.POSIXct("2018-06-29 13:24:00", tz = "CET"))
 FloX <- filter(FloX, Plot %in% viable_flox$Plot)
 
 # Adjust scale and calculate mean for plots
@@ -445,7 +445,7 @@ fviz_pca_ind(pca_1242_normal,
 ```
 
 ```{r}
-# Add grouping columns to data for later usage
+# Add columns to group data for later on
 # FloX
 spc_flox_df <- mutate(spc_flox_df, measurement = "flox", approach = "flox", .after = "PlotID")
 spc_flox_df <- mutate(spc_flox_df, comb = paste0(approach, "_", PlotID), .before = "PlotID")
@@ -462,24 +462,31 @@ spc_1229_normal_df <- mutate(spc_1229_normal_df, comb = paste0(approach, "_", me
 spc_1242_normal_df <- mutate(spc_1242_normal_df, measurement = "1242", approach =  "normal", .after = PlotID)
 spc_1242_normal_df <- mutate(spc_1242_normal_df, comb = paste0(approach, "_", measurement, "_", PlotID), .before = "PlotID")
 
-
+# Create one dataset per PCA
 pca_data_1229 <- rbind(spc_flox_df, spc_1229_minimalistic_df, spc_1229_normal_df)
 pca_data_1242 <- rbind(spc_flox_df, spc_1242_minimalistic_df, spc_1242_normal_df)
 pca_data_all <- rbind(spc_flox_df, spc_1229_minimalistic_df, spc_1229_normal_df, spc_1242_minimalistic_df, spc_1242_normal_df)
 
-
+# Add row names to distinguish data points later on
 rownames(pca_data_1229) = make.names(pca_data_1229[,1], unique=TRUE)
 pca_1229 <- prcomp(pca_data_1229[,-c(1:4)], scale = TRUE)
-
 summary(pca_1229)
 
 fviz_eig(pca_1229, title = "PCA: low Resolution")
-fviz_pca_ind(pca_1229)
+fviz_pca_ind(pca_1229,
+             habillage = pca_data_1229$approach,
+             col.ind = pca_data_1229$PlotID,
+             label = "ind.sup",
+             palette = "lanct",
+             geom.ind = "point",
+             addEllipses = TRUE,
+             ggtheme = theme_minimal()
+             )
 
-# Add rownames for future reference
+
+# Add row names to distinguish data points later on
 rownames(pca_data_1242) = make.names(pca_data_1242[,1], unique=TRUE)
 pca_1242 <- prcomp(pca_data_1242[,-c(1:4)], scale = TRUE)
-test <- pca_data_1242[,- c(1:3)]
 summary(pca_1242)
 
 fviz_eig(pca_1242, title = "PCA: high Resolution")
@@ -489,11 +496,25 @@ fviz_pca_ind(pca_1242,
              label = "ind.sup",
              palette = "lanct",
              geom.ind = "point",
+             addEllipses = TRUE,
+             ggtheme = theme_minimal()
+             )
+# Add row names to distinguish data points later on
+rownames(pca_data_all) = make.names(pca_data_all[,1], unique=TRUE)
+pca_all <- prcomp(pca_data_all[,-c(1:4)], scale = TRUE)
+summary(pca_1242)
+
+fviz_eig(pca_all, title = "PCA: high Resolution")
+fviz_pca_ind(pca_all,
+             habillage = pca_data_all$approach,
+             col.ind = pca_data_all$PlotID,
+             label = "ind.sup",
+             palette = "lanct",
+             geom.ind = "point",
+             addEllipses = TRUE,
              ggtheme = theme_minimal()
              )
 
-rownames(pca_data_all) = make.names(pca_data_all[,1], unique=TRUE)
-pca_all <- prcomp(pca_data_all[,-c(1:4)], scale = TRUE)
 
 summary(pca_all)
 res.ind <- get_pca_ind(pca_all)
