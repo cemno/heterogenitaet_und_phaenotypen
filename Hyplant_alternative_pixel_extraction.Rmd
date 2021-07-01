@@ -463,48 +463,52 @@ spc_1242_normal_df <- mutate(spc_1242_normal_df, measurement = "1242", approach 
 spc_1242_normal_df <- mutate(spc_1242_normal_df, comb = paste0(approach, "_", measurement, "_", PlotID), .before = "PlotID")
 
 # Create one dataset per PCA
-pca_data_1229 <- rbind(spc_flox_df, spc_1229_minimalistic_df, spc_1229_normal_df)
-pca_data_1242 <- rbind(spc_flox_df, spc_1242_minimalistic_df, spc_1242_normal_df)
 pca_data_all <- rbind(spc_flox_df, spc_1229_minimalistic_df, spc_1229_normal_df, spc_1242_minimalistic_df, spc_1242_normal_df)
 
-# Add row names to distinguish data points later on
-rownames(pca_data_1229) = make.names(pca_data_1229[,1], unique=TRUE)
-pca_1229 <- prcomp(pca_data_1229[,-c(1:4)], scale = TRUE)
-summary(pca_1229)
+# pca_data_1229 <- rbind(spc_flox_df, spc_1229_minimalistic_df, spc_1229_normal_df)
+# pca_data_1242 <- rbind(spc_flox_df, spc_1242_minimalistic_df, spc_1242_normal_df)
+# 
+# 
+# # Add row names to distinguish data points later on
+# rownames(pca_data_1229) = make.names(pca_data_1229[,1], unique=TRUE)
+# pca_1229 <- prcomp(pca_data_1229[,-c(1:4)], scale = TRUE)
+# summary(pca_1229)
+# 
+# fviz_eig(pca_1229, title = "PCA: FloX and low resolution data")
+# fviz_pca_ind(pca_1229,
+#              habillage = pca_data_1229$approach,
+#              col.ind = pca_data_1229$PlotID,
+#              label = "ind.sup",
+#              palette = "lanct",
+#              geom.ind = "point",
+#              addEllipses = TRUE,
+#              ggtheme = theme_minimal()
+#              )
+# 
+# 
+# # Add row names to distinguish data points later on
+# rownames(pca_data_1242) = make.names(pca_data_1242[,1], unique=TRUE)
+# pca_1242 <- prcomp(pca_data_1242[,-c(1:4)], scale = TRUE)
+# summary(pca_1242)
+# 
+# fviz_eig(pca_1242, title = "PCA: FloX and high resolution data")
+# fviz_pca_ind(pca_1242,
+#              habillage = pca_data_1242$approach,
+#              col.ind = pca_data_1242$PlotID,
+#              label = "ind.sup",
+#              palette = "lanct",
+#              geom.ind = "point",
+#              addEllipses = TRUE,
+#              ggtheme = theme_minimal()
+#              )
 
-fviz_eig(pca_1229, title = "PCA: low Resolution")
-fviz_pca_ind(pca_1229,
-             habillage = pca_data_1229$approach,
-             col.ind = pca_data_1229$PlotID,
-             label = "ind.sup",
-             palette = "lanct",
-             geom.ind = "point",
-             addEllipses = TRUE,
-             ggtheme = theme_minimal()
-             )
 
-
-# Add row names to distinguish data points later on
-rownames(pca_data_1242) = make.names(pca_data_1242[,1], unique=TRUE)
-pca_1242 <- prcomp(pca_data_1242[,-c(1:4)], scale = TRUE)
-summary(pca_1242)
-
-fviz_eig(pca_1242, title = "PCA: high Resolution")
-fviz_pca_ind(pca_1242,
-             habillage = pca_data_1242$approach,
-             col.ind = pca_data_1242$PlotID,
-             label = "ind.sup",
-             palette = "lanct",
-             geom.ind = "point",
-             addEllipses = TRUE,
-             ggtheme = theme_minimal()
-             )
 # Add row names to distinguish data points later on
 rownames(pca_data_all) = make.names(pca_data_all[,1], unique=TRUE)
 pca_all <- prcomp(pca_data_all[,-c(1:4)], scale = TRUE)
 summary(pca_1242)
 
-fviz_eig(pca_all, title = "PCA: high Resolution")
+fviz_eig(pca_all, title = "PCA: all")
 fviz_pca_ind(pca_all,
              habillage = pca_data_all$approach,
              col.ind = pca_data_all$PlotID,
@@ -515,20 +519,84 @@ fviz_pca_ind(pca_all,
              ggtheme = theme_minimal()
              )
 
-
-summary(pca_all)
-res.ind <- get_pca_ind(pca_all)
-res.ind
-Coor <- res.ind$coord
-Coor <- as.data.frame(Coor)[,c(1,2)]
-fviz_pca_ind(pca_all)
-summary(Coor)
-Coor <- rownames_to_column(Coor, "plot")
-
-#whats needed?
-#metric to compare flox and hyplant data. current one would be difference (-) between plots of flox and hyplant of the corr
 ```
 
+Now we are going to calculate the distance between the pca coordinates (2 dimensions) and each set.
+```{r}
+# Get coordinates of the individuals in the first two dimensions
+res.ind <- get_pca_ind(pca_all)
+coor_all <- res.ind$coord
+coor_all <- as.data.frame(coor_all)[,c(1,2)]
+coor_all <- rownames_to_column(coor_all, "comb")
+
+# Get grouping information into coordinate data
+coor_all <- inner_join(coor_all, pca_data_all[,c(1:4)])
+coor_all <- coor_all[,-1]
+
+# Separate all plots into small tables for each group
+coor_flox_unsorted <- filter(coor_all, measurement == "flox")
+coor_flox <- coor_flox_unsorted[order(coor_flox_unsorted$PlotID),]
+
+coor_1229_minimalistic_unsorted <- filter(coor_all, measurement == "1229" & approach == "minimalistic")
+coor_1229_minimalistic <- coor_1229_minimalistic_unsorted[order(coor_1229_minimalistic_unsorted$PlotID),]
+
+coor_1229_normal_unsorted <- filter(coor_all, measurement == "1229" & approach == "normal")
+coor_1229_normal <- coor_1229_normal_unsorted[order(coor_1229_normal_unsorted$PlotID),]
+
+coor_1242_minimalistic_unsorted <- filter(coor_all, measurement == "1242" & approach == "minimalistic")
+coor_1242_minimalistic <- coor_1242_minimalistic_unsorted[order(coor_1242_minimalistic_unsorted$PlotID),]
+
+coor_1242_normal_unsorted <- filter(coor_all, measurement == "1242" & approach == "normal")
+coor_1242_normal <- coor_1242_normal_unsorted[order(coor_1242_normal_unsorted$PlotID),]
+
+rm(coor_flox_unsorted, coor_1229_minimalistic_unsorted, coor_1229_normal_unsorted, coor_1242_minimalistic_unsorted, coor_1242_normal_unsorted)
+
+# Calculate the distance from FloX to each grouping set
+distance_minimalistic_1229 <- abs(sqrt((coor_flox$Dim.1- coor_1229_minimalistic$Dim.1)^2 + (coor_flox$Dim.2- coor_1229_minimalistic$Dim.2)^2))
+distance_normal_1229 <- abs(sqrt((coor_flox$Dim.1- coor_1229_normal$Dim.1)^2 + (coor_flox$Dim.2- coor_1229_normal$Dim.2)^2))
+distance_minimalistic_1242 <- abs(sqrt((coor_flox$Dim.1- coor_1242_minimalistic$Dim.1)^2 + (coor_flox$Dim.2- coor_1242_minimalistic$Dim.2)^2))
+distance_normal_1242 <- abs(sqrt((coor_flox$Dim.1- coor_1242_normal$Dim.1)^2 + (coor_flox$Dim.2- coor_1242_normal$Dim.2)^2))
+
+# Create table for each distance and bind them to plot
+distance_minimalistic_1229_df = data.frame(PlotID = unique(coor_flox$PlotID), 
+                                     resolution = "low", 
+                                     approach = "minimalistic", 
+                                     distance = distance_minimalistic_1229)
+distance_normal_1229_df = data.frame(PlotID = unique(coor_flox$PlotID), 
+                                     resolution = "low", 
+                                     approach = "normal", 
+                                     distance = distance_normal_1229)
+distance_minimalistic_1242_df = data.frame(PlotID = unique(coor_flox$PlotID), 
+                                     resolution = "high", 
+                                     approach = "minimalistic", 
+                                     distance = distance_minimalistic_1242)
+distance_normal_1242_df = data.frame(PlotID = unique(coor_flox$PlotID), 
+                                     resolution = "high", 
+                                     approach = "normal", 
+                                     distance = distance_normal_1242)
+distance_comparision <- rbind(distance_minimalistic_1229_df,
+                              distance_normal_1229_df,
+                              distance_minimalistic_1242_df, 
+                              distance_normal_1242_df)
+
+# # Calculate the distance between flox to minnimalistic/normal and flox to 1229/1242
+# min_1229_vs_nom_1229 = abs(distance_minimalistic_1229 - distance_normal_1229)
+# min_1242_vs_nom_1242 = abs(distance_minimalistic_1242 - distance_normal_1242)
+# min_1229_vs_min_1242 = abs(distance_minimalistic_1229 - distance_minimalistic_1242)
+# nom_1229_vs_nom_1242 = abs(distance_normal_1229 - distance_normal_1242)
+
+```
+Sweet sweet plots. :)
+```{r}
+# Plotting the difference of the distances
+ggplot(distance_comparision, aes(y = distance))+
+  geom_boxplot(show.legend = TRUE)+
+  facet_wrap(vars(approach, resolution), ncol = 4)+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+```
 
 
 
