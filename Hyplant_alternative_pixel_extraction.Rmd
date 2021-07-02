@@ -126,6 +126,18 @@ frq_pixel_normal_1229 <- full_join(unique(select(normal_1229, PlotID = PLOTID, P
 frq_pixel_normal_1229 <- mutate(frq_pixel_normal_1229, Plots = if_else(Plots > 42, "3 x 3 m", "3 x 6 m"))
 frq_pixel_normal_1242 <- full_join(unique(select(normal_1242, PlotID = PLOTID, Plots = ID)), frq_pixel_normal_1242, by = "PlotID")
 frq_pixel_normal_1242 <- mutate(frq_pixel_normal_1242, Plots = if_else(Plots > 42, "3 x 3 m", "3 x 6 m"))
+
+# Creating table for plot
+frq_pixel_minimalistic_1229 <- mutate(filter(frq_pixel_minimalistic_1229, Plots == "3 x 6 m", PlotID %in% bands_mean_minimalistic_1229$PLOTID), measurement = "1229", approach =  "minimalistic")
+frq_pixel_minimalistic_1242 <- mutate(filter(frq_pixel_minimalistic_1242, Plots == "3 x 6 m", PlotID %in% bands_mean_minimalistic_1229$PLOTID), measurement = "1242", approach =  "minimalistic")
+frq_pixel_normal_1229 <- mutate(filter(frq_pixel_normal_1229, Plots == "3 x 6 m", PlotID %in% bands_mean_minimalistic_1229$PLOTID), measurement = "1229", approach =  "normal")
+frq_pixel_normal_1242 <- mutate(filter(frq_pixel_normal_1242, Plots == "3 x 6 m", PlotID %in% bands_mean_minimalistic_1229$PLOTID), measurement = "1242", approach =  "normal")
+
+pixel_count_comparision <- rbind(frq_pixel_minimalistic_1229,
+                                 frq_pixel_normal_1229,
+                                 frq_pixel_minimalistic_1242,
+                                 frq_pixel_normal_1242)
+
 ```
 ##### Table
 ```{r echo=FALSE, results='markup'}
@@ -140,33 +152,24 @@ knitr::kable(rename(summarise(group_by(frq_pixel_normal_1242, Freq, Plots), "Occ
 Occurrences of pixel count per plot within big and small plots
 ```{r echo=FALSE, results='markup'}
 # Creating plots
-ggplot_minimalistic_1229 <- ggplot(frq_pixel_minimalistic_1229, aes(x = Freq, group = Plots, fill = Plots))+
-  geom_bar(position = "dodge2", width = 0.4)+
-  scale_x_continuous(breaks = seq(0, 10, 2))+
-  xlab("Pixel per plot")+
-  ylab("Occurrences")
-  #theme(legend.position = c(0.9, 0.82), legend.background = element_rect(fill = "white", color = "black"))
-ggplot_minimalistic_1242 <- ggplot(frq_pixel_minimalistic_1242, aes(x = Freq, group = Plots, fill = Plots))+
-  geom_bar(position = "dodge2", width = 0.4)+
-  #scale_x_continuous(breaks = seq(0, 10, 2))+
-  xlab("Pixel per plot")+
-  ylab("Occurrences")
-  #theme(legend.position = c(0.9, 0.82), legend.background = element_rect(fill = "white", color = "black"))
-ggplot_normal_1229 <- ggplot(frq_pixel_normal_1229, aes(x = Freq, group = Plots, fill = Plots))+
-  geom_bar(position = "dodge2", width = 0.4)+
-  #scale_x_continuous(breaks = seq(0, 10, 2))+
-  xlab("Pixel per plot")+
-  ylab("Occurrences")
-  #theme(legend.position = c(0.9, 0.82), legend.background = element_rect(fill = "white", color = "black"))
-ggplot_normal_1242 <- ggplot(frq_pixel_normal_1242, aes(x = Freq, group = Plots, fill = Plots))+
-  geom_bar(position = "dodge2", width = 0.4)+
-  #scale_x_continuous(breaks = seq(0, 10, 2))+
-  xlab("Pixel per plot")+
-  ylab("Occurrences")
-  #theme(legend.position = c(0.9, 0.82), legend.background = element_rect(fill = "white", color = "black"))
+measurement.labs <- c("low resolution (1m x 1m)", "high resolution (0.5m x 1m)")
+names(measurement.labs) <- c("1229", "1242")
 
-# Arranging plots
-ggarrange(ggplot_minimalistic_1229, ggplot_minimalistic_1242, ggplot_normal_1229, ggplot_normal_1242, labels = c("Minimalistic, 12:29 Uhr", "Minimalistic, 12:42 Uhr", "     Normal, 12:29 Uhr", "         Normal, 12:42"), ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom", widths = c(100,100), heights = c(100,100))
+ggplot(pixel_count_comparision, aes(x = Freq, fill = approach))+
+  geom_bar() +
+  ggtitle("Number of pixels per plot")+
+  xlab("Pixel per Plot") +
+  ylab("Counts")+
+  facet_wrap(vars(measurement), labeller = labeller(measurement = measurement.labs), scales = "free_x", shrink = TRUE)+
+  scale_fill_manual(values = rep(c("#fa3232", "#3296fa"), 2), name = "Extraction method:")+
+  theme(panel.background = element_rect(colour = "#D9D9D9", size = 1),
+        plot.title = element_text(vjust = 2, hjust = 0.5),
+        axis.title.y = element_text(vjust = 2),
+        axis.title.x = element_text(vjust = -1),
+        axis.text.x = element_text(size = 10),
+        strip.text = element_text(size = 12),
+        legend.position = "bottom")
+
 ```
 
 <!--Warning mechanism if any Plots don't have a single pixel -->
