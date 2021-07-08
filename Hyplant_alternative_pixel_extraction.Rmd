@@ -648,8 +648,28 @@ boxplot_comparision_approach <- ggplot(distance_comparision, aes(x = approach, y
   scale_fill_manual(values = rep(c("#c8e0e4", "#669999"), 2))+
   ylab("score distance")+
   xlab("extraction method")+
-  facet_wrap(vars(resolution), ncol = 4, labeller = labeller(resolution = resolution.labs))+
+  facet_wrap(vars(resolution), ncol = 2, labeller = labeller(resolution = resolution.labs))+
   geom_signif(comparisons = list(c("minimalistic","normal")), map_signif_level = TRUE, test = "t.test", test.args = list(alternative = "less", paired = TRUE), margin_top = 0.1, vjust = 0.4)+
+  # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
+  theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
+        panel.grid = element_line(colour = "#D9D9D9"),
+        plot.title = element_text(vjust = 2, hjust = 0.5),
+        axis.title.y = element_text(vjust = 2),
+        axis.title.x = element_text(vjust = -1),
+        axis.text.x = element_text(size = 10),
+        strip.text = element_text(size = 12))
+
+approach.labs <- c("minimalistic extraction method", "normal extraction method")
+names(approach.labs) <- c("minimalistic", "normal")
+
+boxplot_comparision_resolution <- ggplot(distance_comparision, aes(x = resolution, y = distance, fill = resolution, group = resolution))+
+  stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
+  geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge")+
+  scale_fill_manual(values = rep(c("#c8ea8a", "#528a6c"), 2))+
+  ylab("score distance")+
+  scale_x_discrete("", labels = c("low" = "low resolution\n(1m x 1m)", "high" = "high resolution\n(0.5m x 1m)"))+
+  facet_wrap(vars(approach), ncol = 2, labeller = labeller(approach = approach.labs))+
+  geom_signif(comparisons = list(c("low","high")), map_signif_level = TRUE, test = "t.test", test.args = list(alternative = "two.sided", paired = TRUE), margin_top = 0.1, vjust = 0.1)+
   # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
   theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
         panel.grid = element_line(colour = "#D9D9D9"),
@@ -662,13 +682,18 @@ boxplot_comparision_approach <- ggplot(distance_comparision, aes(x = approach, y
 
 ```{r, fig.cap = "Comparison of the minimalistic and normal extraction methods by using the distance from FloX to each of the methods of the first two principal components. Separated between the low and high resolution data set. Paired one-sided students t-test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
 if(buffer == TRUE){
-  boxplot_comparision_approach <- boxplot_comparision_approach + ggtitle("Distance between coordinates of FloX and each measurement\nusing the buffered shapefiles")
+  boxplot_comparision_approach <- boxplot_comparision_approach + ggtitle("Distance between coordinates of FloX and each approach\nusing the buffered shapefiles")
+  boxplot_comparision_resolution <- boxplot_comparision_resolution + ggtitle("Distance between coordinates of FloX and each resolution\nusing the buffered shapefiles")
   ggsave(plot = boxplot_comparision_approach, filename = "images/boxplot_comparision_approach_buffered.png")
+  ggsave(plot = boxplot_comparision_resolution, filename = "images/boxplot_comparision_resolution_buffered´.png")
 }else{
   boxplot_comparision_approach <- boxplot_comparision_approach + ggtitle("Distance between coordinates of FloX and each measurement")
+  boxplot_comparision_resolution <- boxplot_comparision_resolution + ggtitle("Distance between coordinates of FloX and each resolution")
   ggsave(plot = boxplot_comparision_approach, filename = "images/boxplot_comparision_approach.png")
+  ggsave(plot = boxplot_comparision_resolution, filename = "images/boxplot_comparision_resolution.png")
 }
 boxplot_comparision_approach
+boxplot_comparision_resolution
 ```
 
 
