@@ -48,6 +48,12 @@ radiance_1242_350 <- brick("Erfassung_Phänotypen2021/HyPlant data/12:42/2018062
 plots_1229 <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1229.shp")
 plots_1242 <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1242.shp")
 
+# Creating a buffer for a second run
+plots_1229 <- sf::st_buffer(plots_1229, dist = -0.3, endCapStyle = "SQUARE")
+write_sf(plots_1229, "Erfassung_Phänotypen2021/Shapefiles/Barley_1229_buffered_30_cm.shp")
+plots_1242 <- sf::st_buffer(plots_1242, dist = -0.3, endCapStyle = "SQUARE")
+write_sf(plots_1242, "Erfassung_Phänotypen2021/Shapefiles/Barley_1242_buffered_30_cm.shp")
+
 # Assign ID
 plots_1229 <- mutate(plots_1229, ID = seq(1:nrow(plots_1229)), .keep = "all")
 plots_1242 <- mutate(plots_1242, ID = seq(1:nrow(plots_1242)), .keep = "all")
@@ -613,20 +619,26 @@ ggplot(distance_comparision, aes(x = approach, y = distance, fill = approach, gr
         strip.text = element_text(size = 12))
 
 ```
+##### Test for normality
+
 ```{r}
 shapiro.test(distance_minimalistic_1229)
 shapiro.test(distance_normal_1229)
 shapiro.test(distance_minimalistic_1242)
 shapiro.test(distance_normal_1242)
-print("\n")
+```
+
+##### One sided t-test to compare methods and resolutions with each other.
+
+```{r}
 print("Comparison between extraction methods at low resolution:")
-t.test(distance_minimalistic_1229, distance_normal_1229, alternative = "two.sided", conf.level = 0.95, paired = TRUE)
+t.test(distance_minimalistic_1229, distance_normal_1229, alternative = "less", conf.level = 0.95, paired = TRUE)
 print("Comparison between extraction methods at high resolution:")
-t.test(distance_minimalistic_1242, distance_normal_1242, alternative = "two.sided", conf.level = 0.95, paired = TRUE)
+t.test(distance_minimalistic_1242, distance_normal_1242, alternative = "less", conf.level = 0.95, paired = TRUE)
 print("Comparison between low and high resolution with minimalistic extraction method:")
-t.test(distance_minimalistic_1229, distance_minimalistic_1242, alternative = "two.sided", conf.level = 0.95, paired = TRUE)
+t.test(distance_minimalistic_1242, distance_minimalistic_1229, alternative = "less", conf.level = 0.95, paired = TRUE)
 print("Comparison between low and high resolution with normal extraction method")
-t.test(distance_normal_1229, distance_normal_1242, alternative = "two.sided", conf.level = 0.95, paired = TRUE)
+t.test(distance_normal_1242, distance_normal_1229, alternative = "less", conf.level = 0.95, paired = TRUE)
 
 ```
 
