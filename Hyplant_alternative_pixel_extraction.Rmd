@@ -53,7 +53,7 @@ plots_1229 <- mutate(plots_1229, ID = seq(1:nrow(plots_1229)), .keep = "all")
 plots_1242 <- mutate(plots_1242, ID = seq(1:nrow(plots_1242)), .keep = "all")
 ```
 
-#### Extract Values from SIF map within the shape file filter weights
+#### Extract Values from top of canopy radiance map within the shape file filter weights
 
 ```{r cache=TRUE}
 ## Extract pixel values from radiance map within the shape file
@@ -65,10 +65,10 @@ normal_1242_raw <- raster::extract(radiance_1242_350, plots_1242, df = TRUE, wei
 
 ```{r}
 # Filter for weights == 1 (cells fully within), no filter for normal approach
-minimalistic_1229 <- filter(minimalistic_1229_raw, weight == 1)
-minimalistic_1242 <- filter(minimalistic_1242_raw, weight == 1)
-normal_1229 <- normal_1229_raw
-normal_1242 <- normal_1242_raw
+minimalistic_1229_filtered <- filter(minimalistic_1229_raw, weight == 1)
+minimalistic_1242_filtered <- filter(minimalistic_1242_raw, weight == 1)
+normal_1229_filtered <- normal_1229_raw
+normal_1242_filtered <- normal_1242_raw
 
 # Rename spectral columns to wavelength
 # Rename minimalistic 1229
@@ -76,37 +76,58 @@ col_names_bands_1229_minimalistic <- head(colnames(minimalistic_1229_raw)[-1], -
 wavelength = "[0-9][.][0-9]{6}"
 new_col_names_bands_1229_minimalistic <- as.character(format(as.numeric(str_extract(pattern = wavelength, col_names_bands_1229_minimalistic))*1000))
 new_col_names_bands_1229_minimalistic <- append("ID", append(new_col_names_bands_1229_minimalistic, "weight"))
-colnames(minimalistic_1229) <- new_col_names_bands_1229_minimalistic
+colnames(minimalistic_1229_filtered) <- new_col_names_bands_1229_minimalistic
 # Rename minimalistic 1242
 col_names_bands_1242_minimalistic <- head(colnames(minimalistic_1242_raw)[-1], -1)
 wavelength = "[0-9][.][0-9]{6}"
 new_col_names_bands_1242_minimalistic <- as.character(format(as.numeric(str_extract(pattern = wavelength, col_names_bands_1242_minimalistic))*1000))
 new_col_names_bands_1242_minimalistic <- append("ID", append(new_col_names_bands_1242_minimalistic, "weight"))
-colnames(minimalistic_1242) <- new_col_names_bands_1242_minimalistic
+colnames(minimalistic_1242_filtered) <- new_col_names_bands_1242_minimalistic
 # Rename normal 1229
 col_names_bands_1229_normal <- head(colnames(normal_1229_raw)[-1], -1)
 wavelength = "[0-9][.][0-9]{6}"
 new_col_names_bands_1229_normal <- as.character(format(as.numeric(str_extract(pattern = wavelength, col_names_bands_1229_normal))*1000))
 new_col_names_bands_1229_normal <- append("ID", append(new_col_names_bands_1229_normal, "weight"))
-colnames(normal_1229) <- new_col_names_bands_1229_normal
+colnames(normal_1229_filtered) <- new_col_names_bands_1229_normal
 # Rename normal 1242
 col_names_bands_1242_normal <- head(colnames(normal_1242_raw)[-1], -1)
 wavelength = "[0-9][.][0-9]{6}"
 new_col_names_bands_1242_normal <- as.character(format(as.numeric(str_extract(pattern = wavelength, col_names_bands_1242_normal))*1000))
 new_col_names_bands_1242_normal <- append("ID", append(new_col_names_bands_1242_normal, "weight"))
-colnames(normal_1242) <- new_col_names_bands_1242_normal
+colnames(normal_1242_filtered) <- new_col_names_bands_1242_normal
+```
+
+#### Aggregate Cell Data
+WARNING: Data is multiplied 1000 to transform float values to integer. This explains negative values.
+
+```{r}
+# Join raster data and plot data
+minimalistic_1229 <- left_join(minimalistic_1229_filtered, plots_1229, by = "ID")
+minimalistic_1242 <- left_join(minimalistic_1242_filtered, plots_1242, by = "ID")
+normal_1229 <- left_join(normal_1229_filtered, plots_1229, by = "ID")
+normal_1242 <- left_join(normal_1242_filtered, plots_1242, by = "ID")
+
+# Calculate mean for all pixels and spectral bands per plot
+bands_mean_minimalistic_1229 <- mutate(minimalistic_1229, across(contains("."), ~ .x / 10))
+bands_mean_minimalistic_1229 <- summarise(group_by(bands_mean_minimalistic_1229, PLOTID), across(contains("."), mean))
+bands_mean_minimalistic_1242 <- mutate(minimalistic_1242, across(contains("."), ~ .x / 10))
+bands_mean_minimalistic_1242 <- summarise(group_by(bands_mean_minimalistic_1242, PLOTID), across(contains("."), mean))
+bands_mean_normal_1229 <- mutate(normal_1229, across(contains("."), ~ (.x/10)*weight))
+bands_mean_normal_1229 <- summarise(group_by(bands_mean_normal_1229, PLOTID), across(contains("."), sum))
+bands_mean_normal_1242 <- mutate(normal_1242, across(contains("."), ~ (.x/10)*weight))
+bands_mean_normal_1242 <- summarise(group_by(bands_mean_normal_1242, PLOTID), across(contains("."), sum))
+
+# Rejoin with attribute table of plots
+minimalistic_1229_mean <- left_join(bands_mean_minimalistic_1229, plots_1229, by = "PLOTID")
+minimalistic_1242_mean <- left_join(bands_mean_minimalistic_1242, plots_1242, by = "PLOTID")
+normal_1229_mean <- left_join(bands_mean_normal_1229, plots_1229, by = "PLOTID")
+normal_1242_mean <- left_join(bands_mean_normal_1242, plots_1242, by = "PLOTID")
 ```
 
 #### Check extracted pixel count per Plot {.tabset}
 
 ##### Code
 ```{r}
-# Join raster data and plot data
-minimalistic_1229 <- left_join(minimalistic_1229, plots_1229, by = "ID")
-minimalistic_1242 <- left_join(minimalistic_1242, plots_1242, by = "ID")
-normal_1229 <- left_join(normal_1229, plots_1229, by = "ID")
-normal_1242 <- left_join(normal_1242, plots_1242, by = "ID")
-
 # Create data frame with pixel count per plot
 frq_pixel_minimalistic_1229 <- rename(data.frame(table(minimalistic_1229$PLOTID)), PlotID = Var1)
 frq_pixel_minimalistic_1229$PlotID <- as.numeric(as.character(frq_pixel_minimalistic_1229$PlotID))
@@ -189,26 +210,6 @@ if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plot
 # Question: How are smaller pixels (caused by rectification) are handled? Do they count on there own? Or are they part of another pixel?
 # Or does the Picture has unequal pixels in it?
 -->
-
-#### Aggregate Cell Data
-WARNING: Data is multiplied 1000 to transform float values to integer. This explains negative values.
-
-```{r}
-# Calculate mean for all pixels and spectral bands per plot
-bands_mean_minimalistic_1229 <- mutate(minimalistic_1229, across(contains("."), ~ .x / 10))
-bands_mean_minimalistic_1229 <- summarise(group_by(bands_mean_minimalistic_1229, PLOTID), across(contains("."), mean))
-bands_mean_minimalistic_1242 <- mutate(minimalistic_1242, across(contains("."), ~ .x / 10))
-bands_mean_minimalistic_1242 <- summarise(group_by(bands_mean_minimalistic_1242, PLOTID), across(contains("."), mean))
-bands_mean_normal_1229 <- mutate(normal_1229, across(contains("."), ~ (.x/10)*weight))
-bands_mean_normal_1229 <- summarise(group_by(bands_mean_normal_1229, PLOTID), across(contains("."), sum))
-bands_mean_normal_1242 <- mutate(normal_1242, across(contains("."), ~ (.x/10)*weight))
-bands_mean_normal_1242 <- summarise(group_by(bands_mean_normal_1242, PLOTID), across(contains("."), sum))
-# Rejoin with attribute table of plots
-minimalistic_1229_mean <- left_join(bands_mean_minimalistic_1229, plots_1229, by = "PLOTID")
-minimalistic_1242_mean <- left_join(bands_mean_minimalistic_1242, plots_1242, by = "PLOTID")
-normal_1229_mean <- left_join(bands_mean_normal_1229, plots_1229, by = "PLOTID")
-normal_1242_mean <- left_join(bands_mean_normal_1242, plots_1242, by = "PLOTID")
-```
 
 #### Closing Cluster
 One should always close the Cluster at the end.
@@ -509,7 +510,7 @@ pca_data_all <- rbind(spc_flox_df, spc_1229_minimalistic_df, spc_1229_normal_df,
 # Add row names to distinguish data points later on
 rownames(pca_data_all) = make.names(pca_data_all[,1], unique=TRUE)
 pca_all <- prcomp(pca_data_all[,-c(1:4)], scale = TRUE)
-summary(pca_1242)
+summary(pca_all)
 
 fviz_eig(pca_all, title = "PCA: all")
 fviz_pca_ind(pca_all,
@@ -612,6 +613,21 @@ ggplot(distance_comparision, aes(x = approach, y = distance, fill = approach, gr
         strip.text = element_text(size = 12))
 
 ```
+```{r}
+shapiro.test(distance_minimalistic_1229)
+shapiro.test(distance_normal_1229)
+shapiro.test(distance_minimalistic_1242)
+shapiro.test(distance_normal_1242)
+print("\n")
+print("Comparison between extraction methods at low resolution:")
+t.test(distance_minimalistic_1229, distance_normal_1229, alternative = "two.sided", conf.level = 0.95, paired = TRUE)
+print("Comparison between extraction methods at high resolution:")
+t.test(distance_minimalistic_1242, distance_normal_1242, alternative = "two.sided", conf.level = 0.95, paired = TRUE)
+print("Comparison between low and high resolution with minimalistic extraction method:")
+t.test(distance_minimalistic_1229, distance_minimalistic_1242, alternative = "two.sided", conf.level = 0.95, paired = TRUE)
+print("Comparison between low and high resolution with normal extraction method")
+t.test(distance_normal_1229, distance_normal_1242, alternative = "two.sided", conf.level = 0.95, paired = TRUE)
 
+```
 
 
