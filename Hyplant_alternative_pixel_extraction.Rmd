@@ -58,10 +58,10 @@ plots_1229 <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1229.shp")
 plots_1242 <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1242.shp")
 
 # Creating a buffer for a second run
-buffer <- TRUE
-plots_1229 <- sf::st_buffer(plots_1229, dist = -0.3, endCapStyle = "SQUARE")
+#buffer <- TRUE
+#plots_1229 <- sf::st_buffer(plots_1229, dist = -0.3, endCapStyle = "SQUARE")
 #write_sf(plots_1229, "Erfassung_Phänotypen2021/Shapefiles/Barley_1229_buffered_30_cm.shp")
-plots_1242 <- sf::st_buffer(plots_1242, dist = -0.3, endCapStyle = "SQUARE")
+#plots_1242 <- sf::st_buffer(plots_1242, dist = -0.3, endCapStyle = "SQUARE")
 #write_sf(plots_1242, "Erfassung_Phänotypen2021/Shapefiles/Barley_1242_buffered_30_cm.shp")
 
 # Assign ID
@@ -243,7 +243,6 @@ library(readxl)
 library(tidyverse)
 library(hyperSpec)
 library(factoextra)
-library(ggpubr)
 library(ggsignif)
 ```
 
@@ -642,7 +641,7 @@ Sweet sweet plots. :)
 resolution.labs <- c("low resolution (1m x 1m)", "high resolution (0.5m x 1m)")
 names(resolution.labs) <- c("low", "high")
 
-boxplot_comparision_approach <- ggplot(distance_comparision, aes(x = approach, y = distance, fill = approach, group = approach))+
+boxplot_comparison_approach <- ggplot(distance_comparision, aes(x = approach, y = distance, fill = approach, group = approach))+
   stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
   geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge")+
   scale_fill_manual(values = rep(c("#c8e0e4", "#669999"), 2))+
@@ -657,12 +656,12 @@ boxplot_comparision_approach <- ggplot(distance_comparision, aes(x = approach, y
         axis.title.y = element_text(vjust = 2),
         axis.title.x = element_text(vjust = -1),
         axis.text.x = element_text(size = 10),
-        strip.text = element_text(size = 12))
+        strip.text = element_text(size = 12, colour = "#941919"))
 
 approach.labs <- c("minimalistic extraction method", "normal extraction method")
 names(approach.labs) <- c("minimalistic", "normal")
 
-boxplot_comparision_resolution <- ggplot(distance_comparision, aes(x = resolution, y = distance, fill = resolution, group = resolution))+
+boxplot_comparison_resolution <- ggplot(distance_comparision, aes(x = resolution, y = distance, fill = resolution, group = resolution))+
   stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
   geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge")+
   scale_fill_manual(values = rep(c("#c8ea8a", "#528a6c"), 2))+
@@ -677,23 +676,23 @@ boxplot_comparision_resolution <- ggplot(distance_comparision, aes(x = resolutio
         axis.title.y = element_text(vjust = 2),
         axis.title.x = element_text(vjust = -1),
         axis.text.x = element_text(size = 10),
-        strip.text = element_text(size = 12))
+        strip.text = element_text(size = 12, colour = "#941919"))
 ```
 
-```{r, fig.cap = "Comparison of the minimalistic and normal extraction methods by using the distance from FloX to each of the methods of the first two principal components. Separated between the low and high resolution data set. Paired one-sided students t-test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
+```{r, fig.cap = "Comparison of the minimalistic and normal extraction methods by using the score distance from FloX to each of the methods of the first two principal components. Separated between the low and high resolution data set. Paired one-sided students t-test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
 if(buffer == TRUE){
-  boxplot_comparision_approach <- boxplot_comparision_approach + ggtitle("Distance between coordinates of FloX and each approach\nusing the buffered shapefiles")
-  boxplot_comparision_resolution <- boxplot_comparision_resolution + ggtitle("Distance between coordinates of FloX and each resolution\nusing the buffered shapefiles")
-  ggsave(plot = boxplot_comparision_approach, filename = "images/boxplot_comparision_approach_buffered.png")
-  ggsave(plot = boxplot_comparision_resolution, filename = "images/boxplot_comparision_resolution_buffered´.png")
+  boxplot_comparison_approach <- boxplot_comparison_approach + ggtitle("Score distance between FloX and each approach\nusing the buffered shapefiles")
+  boxplot_comparison_resolution <- boxplot_comparison_resolution + ggtitle("Score distance between FloX and each resolution\nusing the buffered shapefiles")
+  ggsave(plot = boxplot_comparison_approach, filename = "images/boxplot_comparison_approach_buffered.png")
+  ggsave(plot = boxplot_comparison_resolution, filename = "images/boxplot_comparison_resolution_buffered.png")
 }else{
-  boxplot_comparision_approach <- boxplot_comparision_approach + ggtitle("Distance between coordinates of FloX and each measurement")
-  boxplot_comparision_resolution <- boxplot_comparision_resolution + ggtitle("Distance between coordinates of FloX and each resolution")
-  ggsave(plot = boxplot_comparision_approach, filename = "images/boxplot_comparision_approach.png")
-  ggsave(plot = boxplot_comparision_resolution, filename = "images/boxplot_comparision_resolution.png")
+  boxplot_comparison_approach <- boxplot_comparison_approach + ggtitle("Score distance between FloX and each approach")
+  boxplot_comparison_resolution <- boxplot_comparison_resolution + ggtitle("Score distance between FloX and each resolution")
+  ggsave(plot = boxplot_comparison_approach, filename = "images/boxplot_comparison_approach.png")
+  ggsave(plot = boxplot_comparison_resolution, filename = "images/boxplot_comparison_resolution.png")
 }
-boxplot_comparision_approach
-boxplot_comparision_resolution
+boxplot_comparison_approach
+boxplot_comparison_resolution
 ```
 
 
