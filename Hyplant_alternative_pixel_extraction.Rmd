@@ -1,9 +1,17 @@
 ---
 title: "Hyplant minimalistic approach for pixel extraction"
 author: "Clemens Stephany, Adrian Fülle"
-date: "6/2/2021"
+date: "`r Sys.Date()`"
 output: html_document
 ---
+<style>
+p.caption {
+  font-family: Times, "Times New Roman", Georgia, serif;
+  font-size: 0.9em;
+  font-style: italic;
+}
+</style>
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, results = 'hide', message = FALSE)
@@ -45,14 +53,16 @@ radiance_1229_600 <- brick("Erfassung_Phänotypen2021/HyPlant data/12:29/2018062
 radiance_1242_350 <- brick("Erfassung_Phänotypen2021/HyPlant data/12:42/20180629-CKA-1242-350-L2-E-DUAL_radiance_img_surfrad-rect_subset.bsq")
 
 # Plots & Attributes
+buffer = FALSE
 plots_1229 <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1229.shp")
 plots_1242 <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1242.shp")
 
 # Creating a buffer for a second run
+buffer <- TRUE
 plots_1229 <- sf::st_buffer(plots_1229, dist = -0.3, endCapStyle = "SQUARE")
-write_sf(plots_1229, "Erfassung_Phänotypen2021/Shapefiles/Barley_1229_buffered_30_cm.shp")
+#write_sf(plots_1229, "Erfassung_Phänotypen2021/Shapefiles/Barley_1229_buffered_30_cm.shp")
 plots_1242 <- sf::st_buffer(plots_1242, dist = -0.3, endCapStyle = "SQUARE")
-write_sf(plots_1242, "Erfassung_Phänotypen2021/Shapefiles/Barley_1242_buffered_30_cm.shp")
+#write_sf(plots_1242, "Erfassung_Phänotypen2021/Shapefiles/Barley_1242_buffered_30_cm.shp")
 
 # Assign ID
 plots_1229 <- mutate(plots_1229, ID = seq(1:nrow(plots_1229)), .keep = "all")
@@ -233,6 +243,8 @@ library(readxl)
 library(tidyverse)
 library(hyperSpec)
 library(factoextra)
+library(ggpubr)
+library(ggsignif)
 ```
 
 #### FloX data
@@ -596,29 +608,8 @@ distance_comparision <- rbind(distance_minimalistic_1229_df,
 # nom_1229_vs_nom_1242 = abs(distance_normal_1229 - distance_normal_1242)
 
 ```
-Sweet sweet plots. :)
-```{r}
-# Plotting the difference of the distances
-resolution.labs <- c("low resolution (1m x 1m)", "high resolution (0.5m x 1m)")
-names(resolution.labs) <- c("low", "high")
 
-ggplot(distance_comparision, aes(x = approach, y = distance, fill = approach, group = approach))+
-  stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
-  geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge")+
-  scale_fill_manual(values = rep(c("#c8e0e4", "#669999"), 2))+
-  ylab("coordinate distance")+
-  xlab("extraction method")+
-  ggtitle("Distance between coordinates of FloX and each measurement")+
-  facet_wrap(vars(resolution), ncol = 4, labeller = labeller(resolution = resolution.labs))+
-  theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
-        panel.grid = element_line(colour = "#D9D9D9"),
-        plot.title = element_text(vjust = 2, hjust = 0.5),
-        axis.title.y = element_text(vjust = 2),
-        axis.title.x = element_text(vjust = -1),
-        axis.text.x = element_text(size = 10),
-        strip.text = element_text(size = 12))
 
-```
 ##### Test for normality
 
 ```{r}
@@ -630,16 +621,56 @@ shapiro.test(distance_normal_1242)
 
 ##### One sided t-test to compare methods and resolutions with each other.
 
-```{r}
+```{r, results='markup'}
 print("Comparison between extraction methods at low resolution:")
-t.test(distance_minimalistic_1229, distance_normal_1229, alternative = "less", conf.level = 0.95, paired = TRUE)
+t_test_min_norm_1229 <- t.test(distance_minimalistic_1229, distance_normal_1229, alternative = "less", conf.level = 0.95, paired = TRUE)
+print(paste("p.value:", t_test_min_norm_1229$p.value))
 print("Comparison between extraction methods at high resolution:")
-t.test(distance_minimalistic_1242, distance_normal_1242, alternative = "less", conf.level = 0.95, paired = TRUE)
+t_test_min_norm_1242 <- t.test(distance_minimalistic_1242, distance_normal_1242, alternative = "less", conf.level = 0.95, paired = TRUE)
+print(paste("p.value:", t_test_min_norm_1242$p.value))
 print("Comparison between low and high resolution with minimalistic extraction method:")
-t.test(distance_minimalistic_1242, distance_minimalistic_1229, alternative = "less", conf.level = 0.95, paired = TRUE)
-print("Comparison between low and high resolution with normal extraction method")
-t.test(distance_normal_1242, distance_normal_1229, alternative = "less", conf.level = 0.95, paired = TRUE)
-
+t_test_min_1242_1229 <- t.test(distance_minimalistic_1242, distance_minimalistic_1229, alternative = "less", conf.level = 0.95, paired = TRUE)
+print(paste("p.value:", t_test_min_1242_1229$p.value))
+print("Comparison between low and high resolution with normal extraction method:")
+t_test_norm_1242_1229 <- t.test(distance_normal_1242, distance_normal_1229, alternative = "less", conf.level = 0.95, paired = TRUE)
+print(paste("p.value:",t_test_norm_1242_1229$p.value))
 ```
+
+Sweet sweet plots. :)
+```{r}
+# Plotting the difference of the distances
+resolution.labs <- c("low resolution (1m x 1m)", "high resolution (0.5m x 1m)")
+names(resolution.labs) <- c("low", "high")
+
+boxplot_comparision_approach <- ggplot(distance_comparision, aes(x = approach, y = distance, fill = approach, group = approach))+
+  stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
+  geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge")+
+  scale_fill_manual(values = rep(c("#c8e0e4", "#669999"), 2))+
+  ylab("score distance")+
+  xlab("extraction method")+
+  facet_wrap(vars(resolution), ncol = 4, labeller = labeller(resolution = resolution.labs))+
+  geom_signif(comparisons = list(c("minimalistic","normal")), map_signif_level = TRUE, test = "t.test", test.args = list(alternative = "less", paired = TRUE), margin_top = 0.1, vjust = 0.4)+
+  # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
+  theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
+        panel.grid = element_line(colour = "#D9D9D9"),
+        plot.title = element_text(vjust = 2, hjust = 0.5),
+        axis.title.y = element_text(vjust = 2),
+        axis.title.x = element_text(vjust = -1),
+        axis.text.x = element_text(size = 10),
+        strip.text = element_text(size = 12))
+```
+
+```{r, fig.cap = "Comparison of the minimalistic and normal extraction methods by using the distance from FloX to each of the methods of the first two principal components. Separated between the low and high resolution data set. Paired one-sided students t-test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
+if(buffer == TRUE){
+  boxplot_comparision_approach <- boxplot_comparision_approach + ggtitle("Distance between coordinates of FloX and each measurement\nusing the buffered shapefiles")
+  ggsave(plot = boxplot_comparision_approach, filename = "images/boxplot_comparision_approach_buffered.png")
+}else{
+  boxplot_comparision_approach <- boxplot_comparision_approach + ggtitle("Distance between coordinates of FloX and each measurement")
+  ggsave(plot = boxplot_comparision_approach, filename = "images/boxplot_comparision_approach.png")
+}
+boxplot_comparision_approach
+```
+
+
 
 
