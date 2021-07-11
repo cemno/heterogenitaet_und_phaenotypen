@@ -416,6 +416,7 @@ if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plot
 
 #### Principal Conponent Analysis (PCA) {.tabset}
 The idea is to reduce the data in their dimensions and detect where the largest variation lies. By comparing the principal components of the FloX and the HyPlant we can detect whether both sensors captured the same variation and which approach is best suited for data extraction.
+
 ##### Single datasets {.tabset}
 ###### Code
 ```{r}
@@ -435,7 +436,7 @@ fviz_eig(pca_flox, title = "PCA: FloX")
 #              repel = TRUE     # Avoid text overlapping
 # )
 ```
-###### Hyplant minimalistic methode, low resolution eigenvalues
+###### Minimalistic, low resolution
 ```{r}
 fviz_eig(pca_1229_minimalistic, title = "PCA: Low resolution, minimalistic")
 # fviz_pca_ind(pca_1229_minimalistic,
@@ -445,7 +446,7 @@ fviz_eig(pca_1229_minimalistic, title = "PCA: Low resolution, minimalistic")
 #              repel = TRUE     # Avoid text overlapping
 # )
 ```
-###### Hyplant normal methode, low resolution eigenvalues
+###### Normal, low resolution
 ```{r}
 fviz_eig(pca_1229_normal, title = "PCA: Low resolution, normal")
 # fviz_pca_ind(pca_1229_normal,
@@ -455,7 +456,7 @@ fviz_eig(pca_1229_normal, title = "PCA: Low resolution, normal")
 #              repel = TRUE     # Avoid text overlapping
 # )
 ```
-###### Hyplant minimalistic methode, high resolution eigenvalues
+###### Minimalistic, high resolution
 ```{r}
 fviz_eig(pca_1242_minimalistic, title = "PCA: High resolution, minimalistic")
 # fviz_pca_ind(pca_1242_minimalistic,
@@ -465,7 +466,7 @@ fviz_eig(pca_1242_minimalistic, title = "PCA: High resolution, minimalistic")
 #              repel = TRUE     # Avoid text overlapping
 # )
 ```
-###### Hyplant normal methode, high resolution eigenvalues
+###### Normal, high resolution
 ```{r}
 fviz_eig(pca_1242_normal, title = "PCA: High resolution, normal")
 # fviz_pca_ind(pca_1242_normal,
@@ -477,7 +478,7 @@ fviz_eig(pca_1242_normal, title = "PCA: High resolution, normal")
 # )
 ```
 
-##### All datasets combined {.tabset}
+##### All datasets combined {.active}
 ###### Code
 ```{r}
 # Add columns to group data for later on
