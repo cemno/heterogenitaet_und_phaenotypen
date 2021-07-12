@@ -531,8 +531,9 @@ fviz_eig(pca_all, title = "PCA: all", addlabels = TRUE)
 ###### Individuals {.active}
 
 ```{r}
+annotation <- as.character(factor(paste0(pca_data_all$approach, "_", pca_data_all$buffer), levels = c("flox_FALSE", "minimalistic_FALSE",  "minimalistic_TRUE", "normal_FALSE", "normal_TRUE"), labels = c("FloX", "Minimalistic", "Minimalistic", "Normal", "Normal")))
 fviz_pca_ind(pca_all,
-             habillage = pca_data_all$approach,
+             habillage = annotation,
              col.ind = pca_data_all$PlotID,
              label = "ind.sup",
              palette = "lanct",
@@ -711,10 +712,10 @@ print(paste("p.value:",t_test_norm_1242_1229$p.value))
 
 ```
 ###### Graphs {.active}
-```{r, fig.cap = "Comparison of the minimalistic and normal extraction methods by using the score distance from FloX to each of the methods of the first two principal components. Separated between the low and high resolution data set. Paired one-sided students t-test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
+```{r, fig.cap = "Comparison of the minimalistic and normal extraction methods by using the score distance from FloX to each of the methods of the first two principal components. Separated between the low and high resolution data set. Paired one-sided wilcoxon, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
 boxplot_comparison_approach
 ```
-```{r, fig.cap = "Comparison of the low and high resolution data sets by using the score distance from FloX to each of the resolutions with the first two principal components. Separated between the minimalistic and normal extraction method. Paired one-sided students t-test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
+```{r, fig.cap = "Comparison of the low and high resolution data sets by using the score distance from FloX to each of the resolutions with the first two principal components. Separated between the minimalistic and normal extraction method. Paired one-sided wilcoxon, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
 boxplot_comparison_resolution
 ```
 ##### Buffered data set {.tabset}
@@ -767,10 +768,10 @@ boxplot_comparison_resolution
 
 ```
 ###### Graphs {.active}
-```{r, fig.cap = "Comparison of the minimalistic and normal extraction methods by using the score distance from FloX to each of the methods of the first two principal components. Separated between the low and high resolution data set using the buffered plots. Paired one-sided students t-test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
+```{r, fig.cap = "Comparison of the minimalistic and normal extraction methods by using the score distance from FloX to each of the methods of the first two principal components. Separated between the low and high resolution data set using the buffered plots. Paired one-sided wilcoxon, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
 boxplot_comparison_approach_buffered
 ```
-```{r, fig.cap = "Comparison of the low and high resolution data sets by using the score distance from FloX to each of the resolutions with the first two principal components. Separated between the minimalistic and normal extraction method using the buffered plots. Paired one-sided students t-test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
+```{r, fig.cap = "Comparison of the low and high resolution data sets by using the score distance from FloX to each of the resolutions with the first two principal components. Separated between the minimalistic and normal extraction method using the buffered plots. Paired one-sided wilcoxon, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
 boxplot_comparison_resolution_buffered
 ```
 ##### Unbuffered vs. buffered {.tabset}
@@ -801,7 +802,7 @@ boxplot_comparison_non_vs_buffered <- ggplot(comparison_distance_non_vs_buffered
 ggsave(plot = boxplot_comparison_non_vs_buffered, filename = "images/boxplot_comparison_non_vs_buffered.png")
 ```
 ###### Graphs {.active}
-```{r, fig.cap = "Comparison of the non-buffered and buffered plots by using the score distance from FloX to each of the approaches with the first two principal components. Separated between the minimalistic and normal extraction method using both resolution data sets. Paired one-sided students t-test, n = 30, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
+```{r, fig.cap = "Comparison of the non-buffered and buffered plots by using the score distance from FloX to each of the approaches with the first two principal components. Separated between the minimalistic and normal extraction method using both resolution data sets. Paired one-sided wilcoxon, n = 30, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
 boxplot_comparison_non_vs_buffered
 ```
 
