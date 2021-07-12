@@ -623,6 +623,8 @@ distance_comparision <- select(filter(read.csv("results/distance_comparison.csv"
 distance_comparision$resolution <- factor(distance_comparision$resolution, levels = c("low", "high"))
 distance_comparision_buffered <- filter(read.csv("results/distance_comparison.csv"), buffer == TRUE)
 distance_comparision_buffered$resolution <- factor(distance_comparision_buffered$resolution, levels = c("low", "high"))
+comparison_distance_non_vs_buffered <- read.csv("results/distance_comparison.csv")
+comparison_distance_non_vs_buffered$buffer <- factor(comparison_distance_non_vs_buffered$buffer, levels = c(FALSE,TRUE), labels = c("Non-buffered", "Buffered"))
 ```
 
 
@@ -673,7 +675,7 @@ print(paste("p.value:",t_test_norm_1242_1229$p.value))
     xlab("extraction method")+
     ggtitle("Score distance between FloX and each approach")+
     facet_wrap(resolution ~ ., ncol = 2, labeller = labeller(resolution = resolution.labs))+
-    geom_signif(comparisons = list(c("minimalistic","normal")), map_signif_level = TRUE, test = "t.test", test.args = list(alternative = "less", paired = TRUE), margin_top = 0.1, vjust = 0.4)+
+    geom_signif(comparisons = list(c("minimalistic","normal")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "less", paired = TRUE), margin_top = 0.1, vjust = 0.4)+
     # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
     theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
           panel.grid = element_line(colour = "#D9D9D9"),
@@ -695,7 +697,7 @@ print(paste("p.value:",t_test_norm_1242_1229$p.value))
     ggtitle("Score distance between FloX and each resolution")+
     scale_x_discrete("", labels = c("low" = "low resolution\n(1m x 1m)", "high" = "high resolution\n(0.5m x 1m)"))+
     facet_wrap(vars(approach), ncol = 2, labeller = labeller(approach = approach.labs))+
-    geom_signif(comparisons = list(c("low","high")), map_signif_level = TRUE, test = "t.test", test.args = list(alternative = "two.sided", paired = TRUE), margin_top = 0.1, vjust = 0.1)+
+    geom_signif(comparisons = list(c("low","high")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "two.sided", paired = TRUE), margin_top = 0.1, vjust = 0.1)+
     # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
     theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
           panel.grid = element_line(colour = "#D9D9D9"),
@@ -729,7 +731,7 @@ boxplot_comparison_resolution
     xlab("extraction method")+
     ggtitle("Score distance between FloX and each approach\nusing the buffered plots")+
     facet_wrap(vars(resolution), ncol = 2, labeller = labeller(resolution = resolution.labs))+
-    geom_signif(comparisons = list(c("minimalistic","normal")), map_signif_level = TRUE, test = "t.test", test.args = list(alternative = "less", paired = TRUE), margin_top = 0.1, vjust = 0.4)+
+    geom_signif(comparisons = list(c("minimalistic","normal")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "less", paired = TRUE), margin_top = 0.1, vjust = 0.4)+
     # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
     theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
           panel.grid = element_line(colour = "#D9D9D9"),
@@ -751,7 +753,7 @@ boxplot_comparison_resolution
     ggtitle("Score distance between FloX and each resolution\nusing the buffered plots")+
     scale_x_discrete("", labels = c("low" = "low resolution\n(1m x 1m)", "high" = "high resolution\n(0.5m x 1m)"))+
     facet_wrap(vars(approach), ncol = 2, labeller = labeller(approach = approach.labs))+
-    geom_signif(comparisons = list(c("low","high")), map_signif_level = TRUE, test = "t.test", test.args = list(alternative = "two.sided", paired = TRUE), margin_top = 0.1, vjust = 0.1)+
+    geom_signif(comparisons = list(c("low","high")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "two.sided", paired = TRUE), margin_top = 0.1, vjust = 0.1)+
     # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
     theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
           panel.grid = element_line(colour = "#D9D9D9"),
@@ -771,8 +773,35 @@ boxplot_comparison_approach_buffered
 ```{r, fig.cap = "Comparison of the low and high resolution data sets by using the score distance from FloX to each of the resolutions with the first two principal components. Separated between the minimalistic and normal extraction method using the buffered plots. Paired one-sided students t-test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
 boxplot_comparison_resolution_buffered
 ```
+##### Unbuffered vs. buffered {.tabset}
 
-
-
-
+###### Code
+```{r}
+# Plotting the difference of the distances
+approach.labs <- c("minimalistic extraction method", "normal extraction method")
+names(approach.labs) <- c("minimalistic", "normal")
+boxplot_comparison_non_vs_buffered <- ggplot(comparison_distance_non_vs_buffered, aes(x = buffer, y = distance, fill = buffer, group = buffer))+
+  stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
+  geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge")+
+  scale_fill_manual(values = rep(c("#e69e56", "#b84646"), 2))+
+  ylab("score distance")+
+  scale_x_discrete("")+
+  ggtitle("Score distance between FloX and non-buffered/buffered")+
+  facet_wrap(vars(approach), ncol = 2, labeller = labeller(approach = approach.labs))+
+  geom_signif(comparisons = list(c("Buffered", "Non-buffered")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "less", paired = TRUE), margin_top = 0.1, vjust = 0.4)+
+  # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
+  theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
+        panel.grid = element_line(colour = "#D9D9D9"),
+        plot.title = element_text(vjust = 2, hjust = 0.5),
+        axis.title.y = element_text(vjust = 2),
+        axis.title.x = element_text(vjust = -1),
+        axis.text.x = element_text(size = 10),
+        strip.text = element_text(size = 12),
+        panel.spacing = unit(1.5, "lines"))
+ggsave(plot = boxplot_comparison_non_vs_buffered, filename = "images/boxplot_comparison_non_vs_buffered.png")
+```
+###### Graphs {.active}
+```{r, fig.cap = "Comparison of the non-buffered and buffered plots by using the score distance from FloX to each of the approaches with the first two principal components. Separated between the minimalistic and normal extraction method using both resolution data sets. Paired one-sided students t-test, n = 30, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
+boxplot_comparison_non_vs_buffered
+```
 
