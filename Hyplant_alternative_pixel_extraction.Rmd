@@ -251,6 +251,7 @@ library(tidyverse)
 library(hyperSpec)
 library(factoextra)
 library(ggsignif)
+library(ggpubr)
 ```
   
 #### Spectral plots {.tabset}
@@ -430,7 +431,7 @@ pca_1242_normal <- prcomp(spc_1242_normal, scale = TRUE)
 ```
 ###### FloX eigenvalues {.active} 
 ```{r}
-fviz_eig(pca_flox, title = "PCA: FloX")
+fviz_eig(pca_flox, title = "PCA: FloX", addlabels = TRUE)
 # fviz_pca_ind(pca_flox,
 #              col.ind = "cos2", # Colour by the quality of representation
 #              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
@@ -440,7 +441,7 @@ fviz_eig(pca_flox, title = "PCA: FloX")
 ```
 ###### Minimalistic, low resolution
 ```{r}
-fviz_eig(pca_1229_minimalistic, title = "PCA: Low resolution, minimalistic")
+fviz_eig(pca_1229_minimalistic, title = "PCA: Low resolution, minimalistic", addlabels = TRUE)
 # fviz_pca_ind(pca_1229_minimalistic,
 #              col.ind = "cos2", # Colour by the quality of representation
 #              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
@@ -450,7 +451,7 @@ fviz_eig(pca_1229_minimalistic, title = "PCA: Low resolution, minimalistic")
 ```
 ###### Normal, low resolution
 ```{r}
-fviz_eig(pca_1229_normal, title = "PCA: Low resolution, normal")
+fviz_eig(pca_1229_normal, title = "PCA: Low resolution, normal", addlabels = TRUE)
 # fviz_pca_ind(pca_1229_normal,
 #              col.ind = "cos2", # Colour by the quality of representation
 #              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
@@ -460,7 +461,7 @@ fviz_eig(pca_1229_normal, title = "PCA: Low resolution, normal")
 ```
 ###### Minimalistic, high resolution
 ```{r}
-fviz_eig(pca_1242_minimalistic, title = "PCA: High resolution, minimalistic")
+fviz_eig(pca_1242_minimalistic, title = "PCA: High resolution, minimalistic", addlabels = TRUE)
 # fviz_pca_ind(pca_1242_minimalistic,
 #              col.ind = "cos2", # Colour by the quality of representation
 #              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
@@ -470,7 +471,7 @@ fviz_eig(pca_1242_minimalistic, title = "PCA: High resolution, minimalistic")
 ```
 ###### Normal, high resolution
 ```{r}
-fviz_eig(pca_1242_normal, title = "PCA: High resolution, normal")
+fviz_eig(pca_1242_normal, title = "PCA: High resolution, normal", addlabels = TRUE)
 # fviz_pca_ind(pca_1242_normal,
 #              col.ind = "cos2", # Colour by the quality of representation
 #              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
@@ -480,7 +481,7 @@ fviz_eig(pca_1242_normal, title = "PCA: High resolution, normal")
 # )
 ```
 
-##### All datasets combined {.active}
+##### All datasets combined {.active .tabset}
 ###### Code
 ```{r}
 # Add columns to group data for later on
@@ -501,18 +502,34 @@ spc_1242_normal_df <- mutate(spc_1242_normal_df, measurement = "1242", approach 
 spc_1242_normal_df <- mutate(spc_1242_normal_df, comb = paste0(approach, "_", measurement, "_", PlotID), .before = "PlotID")
 
 # Create one dataset per PCA
-pca_data_all <- rbind(spc_flox_df, spc_1229_minimalistic_df, spc_1229_normal_df, spc_1242_minimalistic_df, spc_1242_normal_df)
-
+if(buffer == FALSE){
+  pca_data_all <- rbind(spc_flox_df, spc_1229_minimalistic_df, spc_1229_normal_df, spc_1242_minimalistic_df, spc_1242_normal_df)
+  pca_data_all <- mutate(pca_data_all, buffer = FALSE, .after = approach)
+  pca_data_all <- mutate(pca_data_all, comb = paste0(comb, "_", buffer))
+  write_csv(pca_data_all, "results/data_for_pca_all.csv")
+}else{
+  pca_data_all <- rbind(spc_flox_df, spc_1229_minimalistic_df, spc_1229_normal_df, spc_1242_minimalistic_df, spc_1242_normal_df)
+  pca_data_all <- mutate(pca_data_all, buffer = TRUE, .after = approach)
+  pca_data_all <- mutate(pca_data_all, comb = paste0(comb, "_", buffer))
+  write_csv(pca_data_all, "results/data_for_pca_all_buffered.csv")
+}
+data_for_pca <- read.csv("results/data_for_pca_all.csv")
+data_for_pca_buffered <- read.csv("results/data_for_pca_all_buffered.csv")
+pca_data_all <- rbind(data_for_pca, filter(data_for_pca_buffered, !(measurement == "flox")))
 # Add row names to distinguish data points later on
 rownames(pca_data_all) = make.names(pca_data_all[,1], unique=TRUE)
-pca_all <- prcomp(pca_data_all[,-c(1:4)], scale = TRUE)
+pca_all <- prcomp(pca_data_all[,-c(1:5)], scale = TRUE)
 summary(pca_all)
 ```
-###### Eigenvalues
+
+###### Eigenvalues 
+
 ```{r}
-fviz_eig(pca_all, title = "PCA: all")
+fviz_eig(pca_all, title = "PCA: all", addlabels = TRUE)
 ```
-###### Indicator
+
+###### Individuals {.active}
+
 ```{r}
 fviz_pca_ind(pca_all,
              habillage = pca_data_all$approach,
@@ -535,67 +552,77 @@ coor_all <- as.data.frame(coor_all)[,c(1,2)]
 coor_all <- rownames_to_column(coor_all, "comb")
 
 # Get grouping information into coordinate data
-coor_all <- inner_join(coor_all, pca_data_all[,c(1:4)])
+coor_all <- inner_join(coor_all, pca_data_all[,c(1:5)])
 coor_all <- coor_all[,-1]
 
 # Separate all plots into small tables for each group
 coor_flox_unsorted <- filter(coor_all, measurement == "flox")
 coor_flox <- coor_flox_unsorted[order(coor_flox_unsorted$PlotID),]
+rm(coor_flox_unsorted)
 
-coor_1229_minimalistic_unsorted <- filter(coor_all, measurement == "1229" & approach == "minimalistic")
-coor_1229_minimalistic <- coor_1229_minimalistic_unsorted[order(coor_1229_minimalistic_unsorted$PlotID),]
+# Pre-define table
+distance_comparision <- data.frame(PlotID = integer(), resolution = character(), approach = character(), buffer = logical(), distance = double())
 
-coor_1229_normal_unsorted <- filter(coor_all, measurement == "1229" & approach == "normal")
-coor_1229_normal <- coor_1229_normal_unsorted[order(coor_1229_normal_unsorted$PlotID),]
-
-coor_1242_minimalistic_unsorted <- filter(coor_all, measurement == "1242" & approach == "minimalistic")
-coor_1242_minimalistic <- coor_1242_minimalistic_unsorted[order(coor_1242_minimalistic_unsorted$PlotID),]
-
-coor_1242_normal_unsorted <- filter(coor_all, measurement == "1242" & approach == "normal")
-coor_1242_normal <- coor_1242_normal_unsorted[order(coor_1242_normal_unsorted$PlotID),]
-
-rm(coor_flox_unsorted, coor_1229_minimalistic_unsorted, coor_1229_normal_unsorted, coor_1242_minimalistic_unsorted, coor_1242_normal_unsorted)
-
-# Calculate the distance from FloX to each grouping set
-distance_minimalistic_1229 <- abs(sqrt((coor_flox$Dim.1- coor_1229_minimalistic$Dim.1)^2 + (coor_flox$Dim.2- coor_1229_minimalistic$Dim.2)^2))
-distance_normal_1229 <- abs(sqrt((coor_flox$Dim.1- coor_1229_normal$Dim.1)^2 + (coor_flox$Dim.2- coor_1229_normal$Dim.2)^2))
-distance_minimalistic_1242 <- abs(sqrt((coor_flox$Dim.1- coor_1242_minimalistic$Dim.1)^2 + (coor_flox$Dim.2- coor_1242_minimalistic$Dim.2)^2))
-distance_normal_1242 <- abs(sqrt((coor_flox$Dim.1- coor_1242_normal$Dim.1)^2 + (coor_flox$Dim.2- coor_1242_normal$Dim.2)^2))
-
-# Create table for each distance and bind them to plot
-distance_minimalistic_1229_df = data.frame(PlotID = unique(coor_flox$PlotID), 
-                                     resolution = "low", 
-                                     approach = "minimalistic", 
-                                     distance = distance_minimalistic_1229)
-distance_normal_1229_df = data.frame(PlotID = unique(coor_flox$PlotID), 
-                                     resolution = "low", 
-                                     approach = "normal", 
-                                     distance = distance_normal_1229)
-distance_minimalistic_1242_df = data.frame(PlotID = unique(coor_flox$PlotID), 
-                                     resolution = "high", 
-                                     approach = "minimalistic", 
-                                     distance = distance_minimalistic_1242)
-distance_normal_1242_df = data.frame(PlotID = unique(coor_flox$PlotID), 
-                                     resolution = "high", 
-                                     approach = "normal", 
-                                     distance = distance_normal_1242)
-distance_comparision <- rbind(distance_minimalistic_1229_df,
-                              distance_normal_1229_df,
-                              distance_minimalistic_1242_df, 
-                              distance_normal_1242_df)
-if (buffer == TRUE){
-  write.csv(distance_comparision, file = "results/distance_comparison_buffered.csv", row.names = FALSE)
-}else{
-  write.csv(distance_comparision, file = "results/distance_comparison.csv", row.names = FALSE)
+for(i in c(FALSE, TRUE)){
+  coor_1229_minimalistic_unsorted <- filter(coor_all, measurement == "1229" & approach == "minimalistic", buffer == as.logical(i))
+  coor_1229_minimalistic <- coor_1229_minimalistic_unsorted[order(coor_1229_minimalistic_unsorted$PlotID),]
+  
+  coor_1229_normal_unsorted <- filter(coor_all, measurement == "1229" & approach == "normal", buffer == i)
+  coor_1229_normal <- coor_1229_normal_unsorted[order(coor_1229_normal_unsorted$PlotID),]
+  
+  coor_1242_minimalistic_unsorted <- filter(coor_all, measurement == "1242" & approach == "minimalistic", buffer == i)
+  coor_1242_minimalistic <- coor_1242_minimalistic_unsorted[order(coor_1242_minimalistic_unsorted$PlotID),]
+  
+  coor_1242_normal_unsorted <- filter(coor_all, measurement == "1242" & approach == "normal", buffer == i)
+  coor_1242_normal <- coor_1242_normal_unsorted[order(coor_1242_normal_unsorted$PlotID),]
+  
+  rm(coor_1229_minimalistic_unsorted, coor_1229_normal_unsorted, coor_1242_minimalistic_unsorted, coor_1242_normal_unsorted)
+  
+  # Calculate the distance from FloX to each grouping set
+  distance_minimalistic_1229 <- abs(sqrt((coor_flox$Dim.1- coor_1229_minimalistic$Dim.1)^2 + (coor_flox$Dim.2- coor_1229_minimalistic$Dim.2)^2))
+  distance_normal_1229 <- abs(sqrt((coor_flox$Dim.1- coor_1229_normal$Dim.1)^2 + (coor_flox$Dim.2- coor_1229_normal$Dim.2)^2))
+  distance_minimalistic_1242 <- abs(sqrt((coor_flox$Dim.1- coor_1242_minimalistic$Dim.1)^2 + (coor_flox$Dim.2- coor_1242_minimalistic$Dim.2)^2))
+  distance_normal_1242 <- abs(sqrt((coor_flox$Dim.1- coor_1242_normal$Dim.1)^2 + (coor_flox$Dim.2- coor_1242_normal$Dim.2)^2))
+  
+  # Create table for each distance and bind them to plot
+  distance_minimalistic_1229_df = data.frame(PlotID = unique(coor_flox$PlotID), 
+                                             resolution = "low", 
+                                             approach = "minimalistic", 
+                                             buffer = i, 
+                                             distance = distance_minimalistic_1229)
+  distance_normal_1229_df = data.frame(PlotID = unique(coor_flox$PlotID), 
+                                       resolution = "low", 
+                                       approach = "normal",  
+                                       buffer = i, 
+                                       distance = distance_normal_1229)
+  distance_minimalistic_1242_df = data.frame(PlotID = unique(coor_flox$PlotID), 
+                                             resolution = "high", 
+                                             approach = "minimalistic",  
+                                             buffer = i, 
+                                             distance = distance_minimalistic_1242)
+  distance_normal_1242_df = data.frame(PlotID = unique(coor_flox$PlotID), 
+                                       resolution = "high", 
+                                       approach = "normal",  
+                                       buffer = i, 
+                                       distance = distance_normal_1242)
+  distance_comparision <- rbind(distance_comparision,
+                                distance_minimalistic_1229_df,
+                                distance_normal_1229_df,
+                                distance_minimalistic_1242_df, 
+                                distance_normal_1242_df)
 }
+
+write.csv(distance_comparision, file = "results/distance_comparison.csv", row.names = FALSE)
 ```
 
 ### Plotting score distance
 
 ```{r}
 # Loading saved data from different runs.
-distance_comparision <- read.csv("results/distance_comparison.csv")
-distance_comparision_buffered <- read.csv("results/distance_comparison_buffered.csv")
+distance_comparision <- select(filter(read.csv("results/distance_comparison.csv"), buffer == FALSE), !buffer)
+distance_comparision$resolution <- factor(distance_comparision$resolution, levels = c("low", "high"))
+distance_comparision_buffered <- filter(read.csv("results/distance_comparison.csv"), buffer == TRUE)
+distance_comparision_buffered$resolution <- factor(distance_comparision_buffered$resolution, levels = c("low", "high"))
 ```
 
 
@@ -645,7 +672,7 @@ print(paste("p.value:",t_test_norm_1242_1229$p.value))
     ylab("score distance")+
     xlab("extraction method")+
     ggtitle("Score distance between FloX and each approach")+
-    facet_wrap(vars(resolution), ncol = 2, labeller = labeller(resolution = resolution.labs))+
+    facet_wrap(resolution ~ ., ncol = 2, labeller = labeller(resolution = resolution.labs))+
     geom_signif(comparisons = list(c("minimalistic","normal")), map_signif_level = TRUE, test = "t.test", test.args = list(alternative = "less", paired = TRUE), margin_top = 0.1, vjust = 0.4)+
     # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
     theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
@@ -654,7 +681,8 @@ print(paste("p.value:",t_test_norm_1242_1229$p.value))
           axis.title.y = element_text(vjust = 2),
           axis.title.x = element_text(vjust = -1),
           axis.text.x = element_text(size = 10),
-          strip.text = element_text(size = 12, colour = "#941919"))
+          strip.text = element_text(size = 12),
+          panel.spacing = unit(1.5, "lines"))
   ggsave(plot = boxplot_comparison_approach, filename = "images/boxplot_comparison_approach.png")
   
   approach.labs <- c("minimalistic extraction method", "normal extraction method")
@@ -675,7 +703,8 @@ print(paste("p.value:",t_test_norm_1242_1229$p.value))
           axis.title.y = element_text(vjust = 2),
           axis.title.x = element_text(vjust = -1),
           axis.text.x = element_text(size = 10),
-          strip.text = element_text(size = 12, colour = "#941919"))
+          strip.text = element_text(size = 12),
+          panel.spacing = unit(1.5, "lines"))
   ggsave(plot = boxplot_comparison_resolution, filename = "images/boxplot_comparison_resolution.png")
 
 ```
@@ -708,7 +737,8 @@ boxplot_comparison_resolution
           axis.title.y = element_text(vjust = 2),
           axis.title.x = element_text(vjust = -1),
           axis.text.x = element_text(size = 10),
-          strip.text = element_text(size = 12, colour = "#941919"))
+          strip.text = element_text(size = 12, colour = "#941919"),
+          panel.spacing = unit(1.5, "lines"))
   ggsave(plot = boxplot_comparison_approach, filename = "images/boxplot_comparison_approach.png")
   
   approach.labs <- c("minimalistic extraction method", "normal extraction method")
@@ -729,7 +759,8 @@ boxplot_comparison_resolution
           axis.title.y = element_text(vjust = 2),
           axis.title.x = element_text(vjust = -1),
           axis.text.x = element_text(size = 10),
-          strip.text = element_text(size = 12, colour = "#941919"))
+          strip.text = element_text(size = 12, colour = "#941919"),
+          panel.spacing = unit(1.5, "lines"))
   ggsave(plot = boxplot_comparison_resolution, filename = "images/boxplot_comparison_resolution.png")
 
 ```
