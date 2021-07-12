@@ -385,6 +385,7 @@ ggplot(pixel_count_comparision, aes(x = Freq, fill = approach))+
   ylab("Counts")+
   facet_wrap(vars(measurement), labeller = labeller(measurement = measurement.labs), scales = "free_x", shrink = TRUE)+
   scale_fill_manual(values = rep(c("#fa3232", "#3296fa"), 2), name = "Extraction method:")+
+  scale_x_continuous(breaks = seq(0,100, 5))+
   theme(panel.background = element_rect(colour = "#D9D9D9", size = 1.5),
         plot.title = element_text(vjust = 2, hjust = 0.5),
         axis.title.y = element_text(vjust = 2),
