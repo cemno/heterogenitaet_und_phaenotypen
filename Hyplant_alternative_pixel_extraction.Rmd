@@ -34,13 +34,15 @@ library(tidyverse)
 library(sf)
 library(ggpubr)
 library(stringr)
+library(hyperSpec)
+library(lubridate)
 ```
 
 #### Starting Cluster
 
 ```{r}
 require(snow)
-threads <- 3
+threads <- 11
 beginCluster(n = threads)
 rm(threads)
 ```
@@ -77,6 +79,12 @@ minimalistic_1229_raw <- raster::extract(radiance_1229_600, plots_1229, df = TRU
 minimalistic_1242_raw <- raster::extract(radiance_1242_350, plots_1242, df = TRUE, weights = TRUE, normalizeWeights = FALSE)
 normal_1229_raw <- raster::extract(radiance_1229_600, plots_1229, df = TRUE, weights = TRUE, normalizeWeights = TRUE)
 normal_1242_raw <- raster::extract(radiance_1242_350, plots_1242, df = TRUE, weights = TRUE, normalizeWeights = TRUE)
+```
+
+#### Closing Cluster
+One should always close the Cluster at the end.
+```{r}
+endCluster()
 ```
 
 ```{r}
@@ -140,113 +148,8 @@ normal_1229_mean <- left_join(bands_mean_normal_1229, plots_1229, by = "PLOTID")
 normal_1242_mean <- left_join(bands_mean_normal_1242, plots_1242, by = "PLOTID")
 ```
 
-#### Check extracted pixel count per Plot {.tabset}
-
-##### Code
-```{r}
-# Create data frame with pixel count per plot
-frq_pixel_minimalistic_1229 <- rename(data.frame(table(minimalistic_1229$PLOTID)), PlotID = Var1)
-frq_pixel_minimalistic_1229$PlotID <- as.numeric(as.character(frq_pixel_minimalistic_1229$PlotID))
-frq_pixel_minimalistic_1242 <- rename(data.frame(table(minimalistic_1242$PLOTID)), PlotID = Var1)
-frq_pixel_minimalistic_1242$PlotID <- as.numeric(as.character(frq_pixel_minimalistic_1242$PlotID))
-frq_pixel_normal_1229 <- rename(data.frame(table(normal_1229$PLOTID)), PlotID = Var1)
-frq_pixel_normal_1229$PlotID <- as.numeric(as.character(frq_pixel_normal_1229$PlotID))
-frq_pixel_normal_1242 <- rename(data.frame(table(normal_1242$PLOTID)), PlotID = Var1)
-frq_pixel_normal_1242$PlotID <- as.numeric(as.character(frq_pixel_normal_1242$PlotID))
-
-# Get FID to separate between big and small plots. (Only small plots have a FID)
-frq_pixel_minimalistic_1229 <- full_join(unique(select(minimalistic_1229, PlotID = PLOTID, Plots = ID)), frq_pixel_minimalistic_1229, by = "PlotID")
-frq_pixel_minimalistic_1229 <- mutate(frq_pixel_minimalistic_1229, Plots = if_else(Plots > 42, "3 x 3 m", "3 x 6 m"))
-frq_pixel_minimalistic_1242 <- full_join(unique(select(minimalistic_1242, PlotID = PLOTID, Plots = ID)), frq_pixel_minimalistic_1242, by = "PlotID")
-frq_pixel_minimalistic_1242 <- mutate(frq_pixel_minimalistic_1242, Plots = if_else(Plots > 42, "3 x 3 m", "3 x 6 m"))
-frq_pixel_normal_1229 <- full_join(unique(select(normal_1229, PlotID = PLOTID, Plots = ID)), frq_pixel_normal_1229, by = "PlotID")
-frq_pixel_normal_1229 <- mutate(frq_pixel_normal_1229, Plots = if_else(Plots > 42, "3 x 3 m", "3 x 6 m"))
-frq_pixel_normal_1242 <- full_join(unique(select(normal_1242, PlotID = PLOTID, Plots = ID)), frq_pixel_normal_1242, by = "PlotID")
-frq_pixel_normal_1242 <- mutate(frq_pixel_normal_1242, Plots = if_else(Plots > 42, "3 x 3 m", "3 x 6 m"))
-
-# Creating table for plot
-frq_pixel_minimalistic_1229 <- mutate(filter(frq_pixel_minimalistic_1229, Plots == "3 x 6 m", PlotID %in% bands_mean_minimalistic_1229$PLOTID), measurement = "1229", approach =  "minimalistic")
-frq_pixel_minimalistic_1242 <- mutate(filter(frq_pixel_minimalistic_1242, Plots == "3 x 6 m", PlotID %in% bands_mean_minimalistic_1229$PLOTID), measurement = "1242", approach =  "minimalistic")
-frq_pixel_normal_1229 <- mutate(filter(frq_pixel_normal_1229, Plots == "3 x 6 m", PlotID %in% bands_mean_minimalistic_1229$PLOTID), measurement = "1229", approach =  "normal")
-frq_pixel_normal_1242 <- mutate(filter(frq_pixel_normal_1242, Plots == "3 x 6 m", PlotID %in% bands_mean_minimalistic_1229$PLOTID), measurement = "1242", approach =  "normal")
-
-pixel_count_comparision <- rbind(frq_pixel_minimalistic_1229,
-                                 frq_pixel_normal_1229,
-                                 frq_pixel_minimalistic_1242,
-                                 frq_pixel_normal_1242)
-
-```
-##### Table
-```{r echo=FALSE, results='markup'}
-knitr::kable(rename(summarise(group_by(frq_pixel_minimalistic_1229, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c', caption = "Minimalistic pixel extraction, 12:29 Uhr")
-knitr::kable(rename(summarise(group_by(frq_pixel_minimalistic_1242, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c', caption = "Minimalistic pixel extraction, 12:42 Uhr")
-knitr::kable(rename(summarise(group_by(frq_pixel_normal_1229, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c',
-             caption = "Normal pixel extraction, 12:29 Uhr")
-knitr::kable(rename(summarise(group_by(frq_pixel_normal_1242, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c',
-             caption = "Normal pixel extraction, 12:42 Uhr")
-```
-##### Plot {.active}
-Occurrences of pixel count per plot within big and small plots
-```{r echo=FALSE, results='markup'}
-# Creating plots
-measurement.labs <- c("low resolution (1m x 1m)", "high resolution (0.5m x 1m)")
-names(measurement.labs) <- c("1229", "1242")
-
-ggplot(pixel_count_comparision, aes(x = Freq, fill = approach))+
-  geom_bar() +
-  ggtitle("Number of pixels per plot")+
-  xlab("Pixel per Plot") +
-  ylab("Counts")+
-  facet_wrap(vars(measurement), labeller = labeller(measurement = measurement.labs), scales = "free_x", shrink = TRUE)+
-  scale_fill_manual(values = rep(c("#fa3232", "#3296fa"), 2), name = "Extraction method:")+
-  theme(panel.background = element_rect(colour = "#D9D9D9", size = 1),
-        plot.title = element_text(vjust = 2, hjust = 0.5),
-        axis.title.y = element_text(vjust = 2),
-        axis.title.x = element_text(vjust = -1),
-        axis.text.x = element_text(size = 10),
-        strip.text = element_text(size = 12),
-        legend.position = "bottom")
-
-```
-
-<!--Warning mechanism if any Plots don't have a single pixel -->
-```{r, echo=FALSE, results='asis'}
-# Check and print plots with no pixels being extracted
-diff = setdiff(unique(minimalistic_1229$ID), seq(1:nrow(plots_1229)))
-if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plots in minimalistic at 12:29 o'clock: ", diff))
-diff = setdiff(unique(minimalistic_1242$ID), seq(1:nrow(plots_1242)))
-if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plots in minimalistic at 12:42 o'clock: ", diff))
-diff = setdiff(unique(normal_1229$ID), seq(1:nrow(plots_1229)))
-if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plots:  in normal at 12:29 o'clock:", diff))
-diff = setdiff(unique(normal_1242$ID), seq(1:nrow(plots_1242)))
-if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plots in normal at 12:42 o'clock: ", diff))
-```
-
-<!--
-# Question: How are smaller pixels (caused by rectification) are handled? Do they count on there own? Or are they part of another pixel?
-# Or does the Picture has unequal pixels in it?
--->
-
-#### Closing Cluster
-One should always close the Cluster at the end.
-```{r}
-endCluster()
-```
-
-
-### Analysis
-
-#### Loading required libraries
-```{r}
-library(lubridate)
-library(readxl)
-library(tidyverse)
-library(hyperSpec)
-library(factoextra)
-library(ggsignif)
-```
-
-#### FloX data
+#### Prepare data  {.tabset}
+##### FloX
 
 ```{r, results = 'markup'}
 # Import FloX data
@@ -282,14 +185,10 @@ spc_flox_df <- as.wide.df(spc_flox)
 colnames(spc_flox_df) <- append("PlotID", as.character(seq(390, 940, 1)))
 #spc_flox_df$PlotID <- paste0("flox_", as.character(spc_flox_df$PlotID)) 
 
-# Plot spectral wave
-par(mar = c(5,6,3,1)+.1)
-plot(spc_flox [,,], "spcprctl5") #spcprctile
-title(main = "Top-of-canopy radiance FloX", outer = FALSE)
 ```
 
-#### Prepare Hyplant data {.tabset}
-##### Code 
+##### Prepare Hyplant data
+
 ```{r}
 # Filter datasets to only include plots that are also in the FloX data
 bands_mean_minimalistic_1229 <- filter(bands_mean_minimalistic_1229, PLOTID %in% viable_flox$Plot)
@@ -341,9 +240,28 @@ colnames(spc_1242_normal_df) <- append("PlotID", as.character(seq(390, 940, 1)))
 
 ```
 
+  
+### Analysis
 
-##### Plots {.active}
+#### Loading required libraries
+```{r}
+library(lubridate)
+library(readxl)
+library(tidyverse)
+library(hyperSpec)
+library(factoextra)
+library(ggsignif)
+library(ggpubr)
+```
+  
+#### Spectral plots {.tabset}
+##### Raw FloX and HyPlant wavelength per plot {.active}
 ```{r, results = 'markup'}
+# FloX
+par(mar = c(5,6,3,1)+.1)
+plot(spc_flox [,,], "spcprctl5") #spcprctile
+title(main = "Top-of-canopy radiance FloX", outer = FALSE)
+
 # Overflight at 12:29 o'clock, minimalistic approach
 par(mar = c(4,6,1,0)+.1, mfrow = c(2,2), oma = c(1,1,3,1))
 plot(spc_1229_minimalistic [,,], "spcprctl5")
@@ -375,7 +293,8 @@ mtext("Top-of-canopy radiance DUAL", outer=TRUE,  cex=1.2, line=1.5)
 # ggplot (as.long.df (spc_1229_minimalistic_new[1]), aes (x = .wavelength, y =spc)) + geom_line ()
 
 ```
-##### Plots normalized against Flox{.active}
+
+##### Plots normalized against Flox
 ```{r, results = 'markup'}
 # Overflight at 12:29 o'clock, minimalistic approach
 par(mar = c(4,6,1,0)+.1, mfrow = c(2,2), oma = c(1,1,4,1), yaxs = "r")
@@ -407,64 +326,163 @@ mtext("Top-of-canopy radiance DUAL\n(normalized against FloX)", outer=TRUE,  cex
 # ggplot (as.long.df (spc_1229_minimalistic_new[1]), aes (x = .wavelength, y =spc)) + geom_line ()
 
 ```
-#### Principal Conponent Analysis (PCA)
+
+#### Check extracted pixel count per Plot {.tabset}
+
+##### Code
+```{r}
+# Create data frame with pixel count per plot
+frq_pixel_minimalistic_1229 <- rename(data.frame(table(minimalistic_1229$PLOTID)), PlotID = Var1)
+frq_pixel_minimalistic_1229$PlotID <- as.numeric(as.character(frq_pixel_minimalistic_1229$PlotID))
+frq_pixel_minimalistic_1242 <- rename(data.frame(table(minimalistic_1242$PLOTID)), PlotID = Var1)
+frq_pixel_minimalistic_1242$PlotID <- as.numeric(as.character(frq_pixel_minimalistic_1242$PlotID))
+frq_pixel_normal_1229 <- rename(data.frame(table(normal_1229$PLOTID)), PlotID = Var1)
+frq_pixel_normal_1229$PlotID <- as.numeric(as.character(frq_pixel_normal_1229$PlotID))
+frq_pixel_normal_1242 <- rename(data.frame(table(normal_1242$PLOTID)), PlotID = Var1)
+frq_pixel_normal_1242$PlotID <- as.numeric(as.character(frq_pixel_normal_1242$PlotID))
+
+# Get FID to separate between big and small plots. (Only small plots have a FID)
+frq_pixel_minimalistic_1229 <- full_join(unique(select(minimalistic_1229, PlotID = PLOTID, Plots = ID)), frq_pixel_minimalistic_1229, by = "PlotID")
+frq_pixel_minimalistic_1229 <- mutate(frq_pixel_minimalistic_1229, Plots = if_else(Plots > 42, "3 x 3 m", "3 x 6 m"))
+frq_pixel_minimalistic_1242 <- full_join(unique(select(minimalistic_1242, PlotID = PLOTID, Plots = ID)), frq_pixel_minimalistic_1242, by = "PlotID")
+frq_pixel_minimalistic_1242 <- mutate(frq_pixel_minimalistic_1242, Plots = if_else(Plots > 42, "3 x 3 m", "3 x 6 m"))
+frq_pixel_normal_1229 <- full_join(unique(select(normal_1229, PlotID = PLOTID, Plots = ID)), frq_pixel_normal_1229, by = "PlotID")
+frq_pixel_normal_1229 <- mutate(frq_pixel_normal_1229, Plots = if_else(Plots > 42, "3 x 3 m", "3 x 6 m"))
+frq_pixel_normal_1242 <- full_join(unique(select(normal_1242, PlotID = PLOTID, Plots = ID)), frq_pixel_normal_1242, by = "PlotID")
+frq_pixel_normal_1242 <- mutate(frq_pixel_normal_1242, Plots = if_else(Plots > 42, "3 x 3 m", "3 x 6 m"))
+
+# Creating table for plot
+frq_pixel_minimalistic_1229 <- mutate(filter(frq_pixel_minimalistic_1229, Plots == "3 x 6 m", PlotID %in% viable_flox$Plot), measurement = "1229", approach =  "minimalistic")
+frq_pixel_minimalistic_1242 <- mutate(filter(frq_pixel_minimalistic_1242, Plots == "3 x 6 m", PlotID %in% viable_flox$Plot), measurement = "1242", approach =  "minimalistic")
+frq_pixel_normal_1229 <- mutate(filter(frq_pixel_normal_1229, Plots == "3 x 6 m", PlotID %in% viable_flox$Plot), measurement = "1229", approach =  "normal")
+frq_pixel_normal_1242 <- mutate(filter(frq_pixel_normal_1242, Plots == "3 x 6 m", PlotID %in% viable_flox$Plot), measurement = "1242", approach =  "normal")
+
+pixel_count_comparision <- rbind(frq_pixel_minimalistic_1229,
+                                 frq_pixel_normal_1229,
+                                 frq_pixel_minimalistic_1242,
+                                 frq_pixel_normal_1242)
+
+```
+##### Table
+```{r echo=FALSE, results='markup'}
+knitr::kable(rename(summarise(group_by(frq_pixel_minimalistic_1229, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c', caption = "Minimalistic pixel extraction, 12:29 Uhr")
+knitr::kable(rename(summarise(group_by(frq_pixel_minimalistic_1242, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c', caption = "Minimalistic pixel extraction, 12:42 Uhr")
+knitr::kable(rename(summarise(group_by(frq_pixel_normal_1229, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c',
+             caption = "Normal pixel extraction, 12:29 Uhr")
+knitr::kable(rename(summarise(group_by(frq_pixel_normal_1242, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c',
+             caption = "Normal pixel extraction, 12:42 Uhr")
+```
+##### Plot {.active}
+Occurrences of pixel count per plot within big and small plots
+```{r echo=FALSE, results='markup'}
+# Creating plots
+measurement.labs <- c("low resolution (1m x 1m)", "high resolution (0.5m x 1m)")
+names(measurement.labs) <- c("1229", "1242")
+
+ggplot(pixel_count_comparision, aes(x = Freq, fill = approach))+
+  geom_bar() +
+  ggtitle("Number of pixels per plot")+
+  xlab("Pixel per Plot") +
+  ylab("Counts")+
+  facet_wrap(vars(measurement), labeller = labeller(measurement = measurement.labs), scales = "free_x", shrink = TRUE)+
+  scale_fill_manual(values = rep(c("#fa3232", "#3296fa"), 2), name = "Extraction method:")+
+  scale_x_continuous(breaks = seq(0,100, 5))+
+  theme(panel.background = element_rect(colour = "#D9D9D9", size = 1.5),
+        plot.title = element_text(vjust = 2, hjust = 0.5),
+        axis.title.y = element_text(vjust = 2),
+        axis.title.x = element_text(vjust = -1),
+        axis.text.x = element_text(size = 10),
+        strip.text = element_text(size = 12),
+        panel.spacing = unit(3, "lines"),
+        legend.position = "bottom")
+
+```
+
+<!--Warning mechanism if any Plots don't have a single pixel -->
+```{r, echo=FALSE, results='asis'}
+# Check and print plots with no pixels being extracted
+diff = setdiff(unique(minimalistic_1229$ID), seq(1:nrow(plots_1229)))
+if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plots in minimalistic at 12:29 o'clock: ", diff))
+diff = setdiff(unique(minimalistic_1242$ID), seq(1:nrow(plots_1242)))
+if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plots in minimalistic at 12:42 o'clock: ", diff))
+diff = setdiff(unique(normal_1229$ID), seq(1:nrow(plots_1229)))
+if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plots:  in normal at 12:29 o'clock:", diff))
+diff = setdiff(unique(normal_1242$ID), seq(1:nrow(plots_1242)))
+if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plots in normal at 12:42 o'clock: ", diff))
+```
+
+<!--
+# Question: How are smaller pixels (caused by rectification) are handled? Do they count on there own? Or are they part of another pixel?
+# Or does the Picture has unequal pixels in it?
+-->
+
+
+#### Principal Conponent Analysis (PCA) {.tabset}
 The idea is to reduce the data in their dimensions and detect where the largest variation lies. By comparing the principal components of the FloX and the HyPlant we can detect whether both sensors captured the same variation and which approach is best suited for data extraction.
+
+##### Single datasets {.tabset}
+###### Code
 ```{r}
 pca_flox <- prcomp(spc_flox, scale = TRUE)
 pca_1229_minimalistic <- prcomp(spc_1229_minimalistic, scale = TRUE)
 pca_1229_normal <- prcomp(spc_1229_normal, scale = TRUE)
 pca_1242_minimalistic <- prcomp(spc_1242_minimalistic, scale = TRUE)
 pca_1242_normal <- prcomp(spc_1242_normal, scale = TRUE)
-
-fviz_eig(pca_flox, title = "PCA: FloX")
-fviz_eig(pca_1229_minimalistic, title = "PCA: Low resolution, minimalistic")
-fviz_eig(pca_1229_normal, title = "PCA: Low resolution, normal")
-fviz_eig(pca_1242_minimalistic, title = "PCA: High resolution, minimalistic")
-fviz_eig(pca_1242_normal, title = "PCA: High resolution, normal")
-
-fviz_pca_ind(pca_flox,
-             col.ind = "cos2", # Colour by the quality of representation
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             title = "PCA: FloX", # with quality of representation # Avoid text overlapping
-             repel = TRUE     # Avoid text overlapping
-)
-fviz_pca_ind(pca_1229_minimalistic,
-             col.ind = "cos2", # Colour by the quality of representation
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             title = "PCA: Low resolution, minimalistic", # with quality of representation # Avoid text overlapping
-             repel = TRUE     # Avoid text overlapping
-)
-fviz_pca_ind(pca_1229_normal,
-             col.ind = "cos2", # Colour by the quality of representation
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             title = "PCA: Low resolution, normal", # with quality of representation # Avoid text overlapping
-             repel = TRUE     # Avoid text overlapping
-)
-fviz_pca_ind(pca_1242_minimalistic,
-             col.ind = "cos2", # Colour by the quality of representation
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             title = "PCA: High resolution, minimalistic", # with quality of representation # Avoid text overlapping
-             repel = TRUE     # Avoid text overlapping
-)
-fviz_pca_ind(pca_1242_normal,
-             col.ind = "cos2", # Colour by the quality of representation
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             title = "PCA: High resolution, normal", # with quality of representation # Avoid text overlapping
-             repel = TRUE,    # Avoid text overlapping
-             addEllipsis = TRUE
-)
-
-# fviz_pca_ind(pca_1229_minimalistic,
-#              col.ind = Varieties, # colour by groups
-#              palette = "Dark2",
-#              addEllipses = TRUE, # Concentration ellipses
-#              legend.title = "Varieties",
-#              repel = TRUE,
-#              title= "Grouping of different crops"
+```
+###### FloX eigenvalues {.active} 
+```{r}
+fviz_eig(pca_flox, title = "PCA: FloX", addlabels = TRUE)
+# fviz_pca_ind(pca_flox,
+#              col.ind = "cos2", # Colour by the quality of representation
+#              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+#              title = "PCA: FloX", # with quality of representation # Avoid text overlapping
+#              repel = TRUE     # Avoid text overlapping
 # )
-
+```
+###### Minimalistic, low resolution
+```{r}
+fviz_eig(pca_1229_minimalistic, title = "PCA: Low resolution, minimalistic", addlabels = TRUE)
+# fviz_pca_ind(pca_1229_minimalistic,
+#              col.ind = "cos2", # Colour by the quality of representation
+#              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+#              title = "PCA: Low resolution, minimalistic", # with quality of representation # Avoid text overlapping
+#              repel = TRUE     # Avoid text overlapping
+# )
+```
+###### Normal, low resolution
+```{r}
+fviz_eig(pca_1229_normal, title = "PCA: Low resolution, normal", addlabels = TRUE)
+# fviz_pca_ind(pca_1229_normal,
+#              col.ind = "cos2", # Colour by the quality of representation
+#              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+#              title = "PCA: Low resolution, normal", # with quality of representation # Avoid text overlapping
+#              repel = TRUE     # Avoid text overlapping
+# )
+```
+###### Minimalistic, high resolution
+```{r}
+fviz_eig(pca_1242_minimalistic, title = "PCA: High resolution, minimalistic", addlabels = TRUE)
+# fviz_pca_ind(pca_1242_minimalistic,
+#              col.ind = "cos2", # Colour by the quality of representation
+#              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+#              title = "PCA: High resolution, minimalistic", # with quality of representation # Avoid text overlapping
+#              repel = TRUE     # Avoid text overlapping
+# )
+```
+###### Normal, high resolution
+```{r}
+fviz_eig(pca_1242_normal, title = "PCA: High resolution, normal", addlabels = TRUE)
+# fviz_pca_ind(pca_1242_normal,
+#              col.ind = "cos2", # Colour by the quality of representation
+#              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+#              title = "PCA: High resolution, normal", # with quality of representation # Avoid text overlapping
+#              repel = TRUE,    # Avoid text overlapping
+#              addEllipsis = TRUE
+# )
 ```
 
+##### All datasets combined {.active .tabset}
+###### Code
 ```{r}
 # Add columns to group data for later on
 # FloX
@@ -484,54 +502,38 @@ spc_1242_normal_df <- mutate(spc_1242_normal_df, measurement = "1242", approach 
 spc_1242_normal_df <- mutate(spc_1242_normal_df, comb = paste0(approach, "_", measurement, "_", PlotID), .before = "PlotID")
 
 # Create one dataset per PCA
-pca_data_all <- rbind(spc_flox_df, spc_1229_minimalistic_df, spc_1229_normal_df, spc_1242_minimalistic_df, spc_1242_normal_df)
-
-# pca_data_1229 <- rbind(spc_flox_df, spc_1229_minimalistic_df, spc_1229_normal_df)
-# pca_data_1242 <- rbind(spc_flox_df, spc_1242_minimalistic_df, spc_1242_normal_df)
-# 
-# 
-# # Add row names to distinguish data points later on
-# rownames(pca_data_1229) = make.names(pca_data_1229[,1], unique=TRUE)
-# pca_1229 <- prcomp(pca_data_1229[,-c(1:4)], scale = TRUE)
-# summary(pca_1229)
-# 
-# fviz_eig(pca_1229, title = "PCA: FloX and low resolution data")
-# fviz_pca_ind(pca_1229,
-#              habillage = pca_data_1229$approach,
-#              col.ind = pca_data_1229$PlotID,
-#              label = "ind.sup",
-#              palette = "lanct",
-#              geom.ind = "point",
-#              addEllipses = TRUE,
-#              ggtheme = theme_minimal()
-#              )
-# 
-# 
-# # Add row names to distinguish data points later on
-# rownames(pca_data_1242) = make.names(pca_data_1242[,1], unique=TRUE)
-# pca_1242 <- prcomp(pca_data_1242[,-c(1:4)], scale = TRUE)
-# summary(pca_1242)
-# 
-# fviz_eig(pca_1242, title = "PCA: FloX and high resolution data")
-# fviz_pca_ind(pca_1242,
-#              habillage = pca_data_1242$approach,
-#              col.ind = pca_data_1242$PlotID,
-#              label = "ind.sup",
-#              palette = "lanct",
-#              geom.ind = "point",
-#              addEllipses = TRUE,
-#              ggtheme = theme_minimal()
-#              )
-
-
+if(buffer == FALSE){
+  pca_data_all <- rbind(spc_flox_df, spc_1229_minimalistic_df, spc_1229_normal_df, spc_1242_minimalistic_df, spc_1242_normal_df)
+  pca_data_all <- mutate(pca_data_all, buffer = FALSE, .after = approach)
+  pca_data_all <- mutate(pca_data_all, comb = paste0(comb, "_", buffer))
+  write_csv(pca_data_all, "results/data_for_pca_all.csv")
+}else{
+  pca_data_all <- rbind(spc_flox_df, spc_1229_minimalistic_df, spc_1229_normal_df, spc_1242_minimalistic_df, spc_1242_normal_df)
+  pca_data_all <- mutate(pca_data_all, buffer = TRUE, .after = approach)
+  pca_data_all <- mutate(pca_data_all, comb = paste0(comb, "_", buffer))
+  write_csv(pca_data_all, "results/data_for_pca_all_buffered.csv")
+}
+data_for_pca <- read.csv("results/data_for_pca_all.csv")
+data_for_pca_buffered <- read.csv("results/data_for_pca_all_buffered.csv")
+pca_data_all <- rbind(data_for_pca, filter(data_for_pca_buffered, !(measurement == "flox")))
 # Add row names to distinguish data points later on
 rownames(pca_data_all) = make.names(pca_data_all[,1], unique=TRUE)
-pca_all <- prcomp(pca_data_all[,-c(1:4)], scale = TRUE)
+pca_all <- prcomp(pca_data_all[,-c(1:5)], scale = TRUE)
 summary(pca_all)
+```
 
-fviz_eig(pca_all, title = "PCA: all")
+###### Eigenvalues 
+
+```{r}
+fviz_eig(pca_all, title = "PCA: all", addlabels = TRUE)
+```
+
+###### Individuals {.active}
+
+```{r}
+annotation <- as.character(factor(paste0(pca_data_all$approach, "_", pca_data_all$buffer), levels = c("flox_FALSE", "minimalistic_FALSE",  "minimalistic_TRUE", "normal_FALSE", "normal_TRUE"), labels = c("FloX", "Minimalistic", "Minimalistic", "Normal", "Normal")))
 fviz_pca_ind(pca_all,
-             habillage = pca_data_all$approach,
+             habillage = annotation,
              col.ind = pca_data_all$PlotID,
              label = "ind.sup",
              palette = "lanct",
@@ -539,9 +541,9 @@ fviz_pca_ind(pca_all,
              addEllipses = TRUE,
              ggtheme = theme_minimal()
              )
-
 ```
 
+##### Calculating coordinates
 Now we are going to calculate the distance between the pca coordinates (2 dimensions) and each set.
 ```{r}
 # Get coordinates of the individuals in the first two dimensions
@@ -551,71 +553,95 @@ coor_all <- as.data.frame(coor_all)[,c(1,2)]
 coor_all <- rownames_to_column(coor_all, "comb")
 
 # Get grouping information into coordinate data
-coor_all <- inner_join(coor_all, pca_data_all[,c(1:4)])
+coor_all <- inner_join(coor_all, pca_data_all[,c(1:5)])
 coor_all <- coor_all[,-1]
 
 # Separate all plots into small tables for each group
 coor_flox_unsorted <- filter(coor_all, measurement == "flox")
 coor_flox <- coor_flox_unsorted[order(coor_flox_unsorted$PlotID),]
+rm(coor_flox_unsorted)
 
-coor_1229_minimalistic_unsorted <- filter(coor_all, measurement == "1229" & approach == "minimalistic")
-coor_1229_minimalistic <- coor_1229_minimalistic_unsorted[order(coor_1229_minimalistic_unsorted$PlotID),]
+# Pre-define table
+distance_comparision <- data.frame(PlotID = integer(), resolution = character(), approach = character(), buffer = logical(), distance = double())
 
-coor_1229_normal_unsorted <- filter(coor_all, measurement == "1229" & approach == "normal")
-coor_1229_normal <- coor_1229_normal_unsorted[order(coor_1229_normal_unsorted$PlotID),]
+for(i in c(FALSE, TRUE)){
+  coor_1229_minimalistic_unsorted <- filter(coor_all, measurement == "1229" & approach == "minimalistic", buffer == as.logical(i))
+  coor_1229_minimalistic <- coor_1229_minimalistic_unsorted[order(coor_1229_minimalistic_unsorted$PlotID),]
+  
+  coor_1229_normal_unsorted <- filter(coor_all, measurement == "1229" & approach == "normal", buffer == i)
+  coor_1229_normal <- coor_1229_normal_unsorted[order(coor_1229_normal_unsorted$PlotID),]
+  
+  coor_1242_minimalistic_unsorted <- filter(coor_all, measurement == "1242" & approach == "minimalistic", buffer == i)
+  coor_1242_minimalistic <- coor_1242_minimalistic_unsorted[order(coor_1242_minimalistic_unsorted$PlotID),]
+  
+  coor_1242_normal_unsorted <- filter(coor_all, measurement == "1242" & approach == "normal", buffer == i)
+  coor_1242_normal <- coor_1242_normal_unsorted[order(coor_1242_normal_unsorted$PlotID),]
+  
+  rm(coor_1229_minimalistic_unsorted, coor_1229_normal_unsorted, coor_1242_minimalistic_unsorted, coor_1242_normal_unsorted)
+  
+  # Calculate the distance from FloX to each grouping set
+  distance_minimalistic_1229 <- abs(sqrt((coor_flox$Dim.1- coor_1229_minimalistic$Dim.1)^2 + (coor_flox$Dim.2- coor_1229_minimalistic$Dim.2)^2))
+  distance_normal_1229 <- abs(sqrt((coor_flox$Dim.1- coor_1229_normal$Dim.1)^2 + (coor_flox$Dim.2- coor_1229_normal$Dim.2)^2))
+  distance_minimalistic_1242 <- abs(sqrt((coor_flox$Dim.1- coor_1242_minimalistic$Dim.1)^2 + (coor_flox$Dim.2- coor_1242_minimalistic$Dim.2)^2))
+  distance_normal_1242 <- abs(sqrt((coor_flox$Dim.1- coor_1242_normal$Dim.1)^2 + (coor_flox$Dim.2- coor_1242_normal$Dim.2)^2))
+  
+  # Create table for each distance and bind them to plot
+  distance_minimalistic_1229_df = data.frame(PlotID = unique(coor_flox$PlotID), 
+                                             resolution = "low", 
+                                             approach = "minimalistic", 
+                                             buffer = i, 
+                                             distance = distance_minimalistic_1229)
+  distance_normal_1229_df = data.frame(PlotID = unique(coor_flox$PlotID), 
+                                       resolution = "low", 
+                                       approach = "normal",  
+                                       buffer = i, 
+                                       distance = distance_normal_1229)
+  distance_minimalistic_1242_df = data.frame(PlotID = unique(coor_flox$PlotID), 
+                                             resolution = "high", 
+                                             approach = "minimalistic",  
+                                             buffer = i, 
+                                             distance = distance_minimalistic_1242)
+  distance_normal_1242_df = data.frame(PlotID = unique(coor_flox$PlotID), 
+                                       resolution = "high", 
+                                       approach = "normal",  
+                                       buffer = i, 
+                                       distance = distance_normal_1242)
+  distance_comparision <- rbind(distance_comparision,
+                                distance_minimalistic_1229_df,
+                                distance_normal_1229_df,
+                                distance_minimalistic_1242_df, 
+                                distance_normal_1242_df)
+}
 
-coor_1242_minimalistic_unsorted <- filter(coor_all, measurement == "1242" & approach == "minimalistic")
-coor_1242_minimalistic <- coor_1242_minimalistic_unsorted[order(coor_1242_minimalistic_unsorted$PlotID),]
+write.csv(distance_comparision, file = "results/distance_comparison.csv", row.names = FALSE)
+```
 
-coor_1242_normal_unsorted <- filter(coor_all, measurement == "1242" & approach == "normal")
-coor_1242_normal <- coor_1242_normal_unsorted[order(coor_1242_normal_unsorted$PlotID),]
+### Plotting score distance
 
-rm(coor_flox_unsorted, coor_1229_minimalistic_unsorted, coor_1229_normal_unsorted, coor_1242_minimalistic_unsorted, coor_1242_normal_unsorted)
-
-# Calculate the distance from FloX to each grouping set
-distance_minimalistic_1229 <- abs(sqrt((coor_flox$Dim.1- coor_1229_minimalistic$Dim.1)^2 + (coor_flox$Dim.2- coor_1229_minimalistic$Dim.2)^2))
-distance_normal_1229 <- abs(sqrt((coor_flox$Dim.1- coor_1229_normal$Dim.1)^2 + (coor_flox$Dim.2- coor_1229_normal$Dim.2)^2))
-distance_minimalistic_1242 <- abs(sqrt((coor_flox$Dim.1- coor_1242_minimalistic$Dim.1)^2 + (coor_flox$Dim.2- coor_1242_minimalistic$Dim.2)^2))
-distance_normal_1242 <- abs(sqrt((coor_flox$Dim.1- coor_1242_normal$Dim.1)^2 + (coor_flox$Dim.2- coor_1242_normal$Dim.2)^2))
-
-# Create table for each distance and bind them to plot
-distance_minimalistic_1229_df = data.frame(PlotID = unique(coor_flox$PlotID), 
-                                     resolution = "low", 
-                                     approach = "minimalistic", 
-                                     distance = distance_minimalistic_1229)
-distance_normal_1229_df = data.frame(PlotID = unique(coor_flox$PlotID), 
-                                     resolution = "low", 
-                                     approach = "normal", 
-                                     distance = distance_normal_1229)
-distance_minimalistic_1242_df = data.frame(PlotID = unique(coor_flox$PlotID), 
-                                     resolution = "high", 
-                                     approach = "minimalistic", 
-                                     distance = distance_minimalistic_1242)
-distance_normal_1242_df = data.frame(PlotID = unique(coor_flox$PlotID), 
-                                     resolution = "high", 
-                                     approach = "normal", 
-                                     distance = distance_normal_1242)
-distance_comparision <- rbind(distance_minimalistic_1229_df,
-                              distance_normal_1229_df,
-                              distance_minimalistic_1242_df, 
-                              distance_normal_1242_df)
-
-# # Calculate the distance between flox to minnimalistic/normal and flox to 1229/1242
-# min_1229_vs_nom_1229 = abs(distance_minimalistic_1229 - distance_normal_1229)
-# min_1242_vs_nom_1242 = abs(distance_minimalistic_1242 - distance_normal_1242)
-# min_1229_vs_min_1242 = abs(distance_minimalistic_1229 - distance_minimalistic_1242)
-# nom_1229_vs_nom_1242 = abs(distance_normal_1229 - distance_normal_1242)
-
+```{r}
+# Loading saved data from different runs.
+distance_comparision <- select(filter(read.csv("results/distance_comparison.csv"), buffer == FALSE), !buffer)
+distance_comparision$resolution <- factor(distance_comparision$resolution, levels = c("low", "high"))
+distance_comparision_buffered <- filter(read.csv("results/distance_comparison.csv"), buffer == TRUE)
+distance_comparision_buffered$resolution <- factor(distance_comparision_buffered$resolution, levels = c("low", "high"))
+comparison_distance_non_vs_buffered <- read.csv("results/distance_comparison.csv")
+comparison_distance_non_vs_buffered$buffer <- factor(comparison_distance_non_vs_buffered$buffer, levels = c(FALSE,TRUE), labels = c("Non-buffered", "Buffered"))
 ```
 
 
-##### Test for normality
-
+#### Test for normality
 ```{r}
-shapiro.test(distance_minimalistic_1229)
-shapiro.test(distance_normal_1229)
-shapiro.test(distance_minimalistic_1242)
-shapiro.test(distance_normal_1242)
+# Unbuffered
+shapiro.test(filter(distance_comparision, resolution == "low" & approach == "minimalistic")$distance)
+shapiro.test(filter(distance_comparision, resolution == "low" & approach == "normal")$distance)
+shapiro.test(filter(distance_comparision, resolution == "high" & approach == "minimalistic")$distance)
+shapiro.test(filter(distance_comparision, resolution == "high" & approach == "normal")$distance)
+
+# Using buffered Data
+shapiro.test(filter(distance_comparision_buffered, resolution == "low" & approach == "minimalistic")$distance)
+shapiro.test(filter(distance_comparision_buffered, resolution == "low" & approach == "normal")$distance)
+shapiro.test(filter(distance_comparision_buffered, resolution == "high" & approach == "minimalistic")$distance)
+shapiro.test(filter(distance_comparision_buffered, resolution == "high" & approach == "normal")$distance)
 ```
 
 ##### One sided t-test to compare methods and resolutions with each other.
@@ -635,66 +661,148 @@ t_test_norm_1242_1229 <- t.test(distance_normal_1242, distance_normal_1229, alte
 print(paste("p.value:",t_test_norm_1242_1229$p.value))
 ```
 
-Sweet sweet plots. :)
-```{r}
-# Plotting the difference of the distances
-resolution.labs <- c("low resolution (1m x 1m)", "high resolution (0.5m x 1m)")
-names(resolution.labs) <- c("low", "high")
-
-boxplot_comparison_approach <- ggplot(distance_comparision, aes(x = approach, y = distance, fill = approach, group = approach))+
-  stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
-  geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge")+
-  scale_fill_manual(values = rep(c("#c8e0e4", "#669999"), 2))+
-  ylab("score distance")+
-  xlab("extraction method")+
-  facet_wrap(vars(resolution), ncol = 2, labeller = labeller(resolution = resolution.labs))+
-  geom_signif(comparisons = list(c("minimalistic","normal")), map_signif_level = TRUE, test = "t.test", test.args = list(alternative = "less", paired = TRUE), margin_top = 0.1, vjust = 0.4)+
-  # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
-  theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
-        panel.grid = element_line(colour = "#D9D9D9"),
-        plot.title = element_text(vjust = 2, hjust = 0.5),
-        axis.title.y = element_text(vjust = 2),
-        axis.title.x = element_text(vjust = -1),
-        axis.text.x = element_text(size = 10),
-        strip.text = element_text(size = 12, colour = "#941919"))
-
-approach.labs <- c("minimalistic extraction method", "normal extraction method")
-names(approach.labs) <- c("minimalistic", "normal")
-
-boxplot_comparison_resolution <- ggplot(distance_comparision, aes(x = resolution, y = distance, fill = resolution, group = resolution))+
-  stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
-  geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge")+
-  scale_fill_manual(values = rep(c("#c8ea8a", "#528a6c"), 2))+
-  ylab("score distance")+
-  scale_x_discrete("", labels = c("low" = "low resolution\n(1m x 1m)", "high" = "high resolution\n(0.5m x 1m)"))+
-  facet_wrap(vars(approach), ncol = 2, labeller = labeller(approach = approach.labs))+
-  geom_signif(comparisons = list(c("low","high")), map_signif_level = TRUE, test = "t.test", test.args = list(alternative = "two.sided", paired = TRUE), margin_top = 0.1, vjust = 0.1)+
-  # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
-  theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
-        panel.grid = element_line(colour = "#D9D9D9"),
-        plot.title = element_text(vjust = 2, hjust = 0.5),
-        axis.title.y = element_text(vjust = 2),
-        axis.title.x = element_text(vjust = -1),
-        axis.text.x = element_text(size = 10),
-        strip.text = element_text(size = 12, colour = "#941919"))
-```
-
-```{r, fig.cap = "Comparison of the minimalistic and normal extraction methods by using the score distance from FloX to each of the methods of the first two principal components. Separated between the low and high resolution data set. Paired one-sided students t-test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
-if(buffer == TRUE){
-  boxplot_comparison_approach <- boxplot_comparison_approach + ggtitle("Score distance between FloX and each approach\nusing the buffered shapefiles")
-  boxplot_comparison_resolution <- boxplot_comparison_resolution + ggtitle("Score distance between FloX and each resolution\nusing the buffered shapefiles")
-  ggsave(plot = boxplot_comparison_approach, filename = "images/boxplot_comparison_approach_buffered.png")
-  ggsave(plot = boxplot_comparison_resolution, filename = "images/boxplot_comparison_resolution_buffered.png")
-}else{
-  boxplot_comparison_approach <- boxplot_comparison_approach + ggtitle("Score distance between FloX and each approach")
-  boxplot_comparison_resolution <- boxplot_comparison_resolution + ggtitle("Score distance between FloX and each resolution")
+#### Plotting comparison {.tabset}
+##### Unbuffered data set {.tabset}
+###### Code
+```{r, results='hide'}
+  # Plotting the difference of the distances
+  resolution.labs <- c("low resolution (1m x 1m)", "high resolution (0.5m x 1m)")
+  names(resolution.labs) <- c("low", "high")
+  boxplot_comparison_approach <- ggplot(distance_comparision, aes(x = approach, y = distance, fill = approach, group = approach))+
+    stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
+    geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge")+
+    scale_fill_manual(values = rep(c("#c8e0e4", "#669999"), 2))+
+    ylab("score distance")+
+    xlab("extraction method")+
+    ggtitle("Score distance between FloX and each approach")+
+    facet_wrap(resolution ~ ., ncol = 2, labeller = labeller(resolution = resolution.labs))+
+    geom_signif(comparisons = list(c("minimalistic","normal")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "less", paired = TRUE), margin_top = 0.1, vjust = 0.4)+
+    # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
+    theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
+          panel.grid = element_line(colour = "#D9D9D9"),
+          plot.title = element_text(vjust = 2, hjust = 0.5),
+          axis.title.y = element_text(vjust = 2),
+          axis.title.x = element_text(vjust = -1),
+          axis.text.x = element_text(size = 10),
+          strip.text = element_text(size = 12),
+          panel.spacing = unit(1.5, "lines"))
   ggsave(plot = boxplot_comparison_approach, filename = "images/boxplot_comparison_approach.png")
+  
+  approach.labs <- c("minimalistic extraction method", "normal extraction method")
+  names(approach.labs) <- c("minimalistic", "normal")
+  boxplot_comparison_resolution <- ggplot(distance_comparision, aes(x = resolution, y = distance, fill = resolution, group = resolution))+
+    stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
+    geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge")+
+    scale_fill_manual(values = rep(c("#c8ea8a", "#528a6c"), 2))+
+    ylab("score distance")+
+    ggtitle("Score distance between FloX and each resolution")+
+    scale_x_discrete("", labels = c("low" = "low resolution\n(1m x 1m)", "high" = "high resolution\n(0.5m x 1m)"))+
+    facet_wrap(vars(approach), ncol = 2, labeller = labeller(approach = approach.labs))+
+    geom_signif(comparisons = list(c("low","high")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "two.sided", paired = TRUE), margin_top = 0.1, vjust = 0.1)+
+    # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
+    theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
+          panel.grid = element_line(colour = "#D9D9D9"),
+          plot.title = element_text(vjust = 2, hjust = 0.5),
+          axis.title.y = element_text(vjust = 2),
+          axis.title.x = element_text(vjust = -1),
+          axis.text.x = element_text(size = 10),
+          strip.text = element_text(size = 12),
+          panel.spacing = unit(1.5, "lines"))
   ggsave(plot = boxplot_comparison_resolution, filename = "images/boxplot_comparison_resolution.png")
-}
+
+```
+###### Graphs {.active}
+```{r, fig.cap = "Comparison of the minimalistic and normal extraction methods by using the score distance from FloX to each of the methods of the first two principal components. Separated between the low and high resolution data set. Paired one-sided wilcoxon, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
 boxplot_comparison_approach
+```
+```{r, fig.cap = "Comparison of the low and high resolution data sets by using the score distance from FloX to each of the resolutions with the first two principal components. Separated between the minimalistic and normal extraction method. Paired one-sided wilcoxon, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
 boxplot_comparison_resolution
 ```
+##### Buffered data set {.tabset}
+###### Code
+```{r, results='hide'}
+  # Plotting the difference of the distances
+  resolution.labs <- c("low resolution (1m x 1m)", "high resolution (0.5m x 1m)")
+  names(resolution.labs) <- c("low", "high")
+  boxplot_comparison_approach_buffered <- ggplot(distance_comparision_buffered, aes(x = approach, y = distance, fill = approach, group = approach))+
+    stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
+    geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge")+
+    scale_fill_manual(values = rep(c("#c8e0e4", "#669999"), 2))+
+    ylab("score distance")+
+    xlab("extraction method")+
+    ggtitle("Score distance between FloX and each approach\nusing the buffered plots")+
+    facet_wrap(vars(resolution), ncol = 2, labeller = labeller(resolution = resolution.labs))+
+    geom_signif(comparisons = list(c("minimalistic","normal")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "less", paired = TRUE), margin_top = 0.1, vjust = 0.4)+
+    # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
+    theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
+          panel.grid = element_line(colour = "#D9D9D9"),
+          plot.title = element_text(vjust = 2, hjust = 0.5),
+          axis.title.y = element_text(vjust = 2),
+          axis.title.x = element_text(vjust = -1),
+          axis.text.x = element_text(size = 10),
+          strip.text = element_text(size = 12, colour = "#941919"),
+          panel.spacing = unit(1.5, "lines"))
+  ggsave(plot = boxplot_comparison_approach, filename = "images/boxplot_comparison_approach.png")
+  
+  approach.labs <- c("minimalistic extraction method", "normal extraction method")
+  names(approach.labs) <- c("minimalistic", "normal")
+  boxplot_comparison_resolution_buffered <- ggplot(distance_comparision_buffered, aes(x = resolution, y = distance, fill = resolution, group = resolution))+
+    stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
+    geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge")+
+    scale_fill_manual(values = rep(c("#c8ea8a", "#528a6c"), 2))+
+    ylab("score distance")+
+    ggtitle("Score distance between FloX and each resolution\nusing the buffered plots")+
+    scale_x_discrete("", labels = c("low" = "low resolution\n(1m x 1m)", "high" = "high resolution\n(0.5m x 1m)"))+
+    facet_wrap(vars(approach), ncol = 2, labeller = labeller(approach = approach.labs))+
+    geom_signif(comparisons = list(c("low","high")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "two.sided", paired = TRUE), margin_top = 0.1, vjust = 0.1)+
+    # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
+    theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
+          panel.grid = element_line(colour = "#D9D9D9"),
+          plot.title = element_text(vjust = 2, hjust = 0.5),
+          axis.title.y = element_text(vjust = 2),
+          axis.title.x = element_text(vjust = -1),
+          axis.text.x = element_text(size = 10),
+          strip.text = element_text(size = 12, colour = "#941919"),
+          panel.spacing = unit(1.5, "lines"))
+  ggsave(plot = boxplot_comparison_resolution, filename = "images/boxplot_comparison_resolution.png")
 
+```
+###### Graphs {.active}
+```{r, fig.cap = "Comparison of the minimalistic and normal extraction methods by using the score distance from FloX to each of the methods of the first two principal components. Separated between the low and high resolution data set using the buffered plots. Paired one-sided wilcoxon, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
+boxplot_comparison_approach_buffered
+```
+```{r, fig.cap = "Comparison of the low and high resolution data sets by using the score distance from FloX to each of the resolutions with the first two principal components. Separated between the minimalistic and normal extraction method using the buffered plots. Paired one-sided wilcoxon, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
+boxplot_comparison_resolution_buffered
+```
+##### Unbuffered vs. buffered {.tabset}
 
-
+###### Code
+```{r}
+# Plotting the difference of the distances
+approach.labs <- c("minimalistic extraction method", "normal extraction method")
+names(approach.labs) <- c("minimalistic", "normal")
+boxplot_comparison_non_vs_buffered <- ggplot(comparison_distance_non_vs_buffered, aes(x = buffer, y = distance, fill = buffer, group = buffer))+
+  stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
+  geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge")+
+  scale_fill_manual(values = rep(c("#e69e56", "#b84646"), 2))+
+  ylab("score distance")+
+  scale_x_discrete("")+
+  ggtitle("Score distance between FloX and non-buffered/buffered")+
+  facet_wrap(vars(approach), ncol = 2, labeller = labeller(approach = approach.labs))+
+  geom_signif(comparisons = list(c("Buffered", "Non-buffered")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "less", paired = TRUE), margin_top = 0.1, vjust = 0.4)+
+  # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
+  theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
+        panel.grid = element_line(colour = "#D9D9D9"),
+        plot.title = element_text(vjust = 2, hjust = 0.5),
+        axis.title.y = element_text(vjust = 2),
+        axis.title.x = element_text(vjust = -1),
+        axis.text.x = element_text(size = 10),
+        strip.text = element_text(size = 12),
+        panel.spacing = unit(1.5, "lines"))
+ggsave(plot = boxplot_comparison_non_vs_buffered, filename = "images/boxplot_comparison_non_vs_buffered.png")
+```
+###### Graphs {.active}
+```{r, fig.cap = "Comparison of the non-buffered and buffered plots by using the score distance from FloX to each of the approaches with the first two principal components. Separated between the minimalistic and normal extraction method using both resolution data sets. Paired one-sided wilcoxon, n = 30, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
+boxplot_comparison_non_vs_buffered
+```
 
