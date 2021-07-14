@@ -42,7 +42,7 @@ library(lubridate)
 
 ```{r}
 require(snow)
-threads <- 11
+threads <- 3
 beginCluster(n = threads)
 rm(threads)
 ```
