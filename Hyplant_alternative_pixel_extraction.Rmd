@@ -751,7 +751,7 @@ boxplot_comparison_approach_buffered <- ggplot(distance_comparision_buffered, ae
         axis.text.x = element_text(size = 10),
         strip.text = element_text(size = 12, colour = "#941919"),
         panel.spacing = unit(1.5, "lines"))
-ggsave(plot = boxplot_comparison_approach, filename = "images/boxplot_comparison_approach_buffered.png", height = 5, width = 7)
+ggsave(plot = boxplot_comparison_approach_buffered, filename = "images/boxplot_comparison_approach_buffered.png", height = 5, width = 7)
 
 approach.labs <- c("minimalistic extraction method", "normal extraction method")
 names(approach.labs) <- c("minimalistic", "normal")
@@ -776,7 +776,7 @@ boxplot_comparison_resolution_buffered <- ggplot(distance_comparision_buffered, 
         axis.text.x = element_text(size = 10),
         strip.text = element_text(size = 12, colour = "#941919"),
         panel.spacing = unit(1.5, "lines"))
-ggsave(plot = boxplot_comparison_resolution, filename = "images/boxplot_comparison_resolution_buffered.png", height = 5, width = 7)
+ggsave(plot = boxplot_comparison_resolution_buffered, filename = "images/boxplot_comparison_resolution_buffered.png", height = 5, width = 7)
 
 ```
 ###### Graphs {.active}
