@@ -381,11 +381,11 @@ names(measurement.labs) <- c("1229", "1242")
 
 ggplot(pixel_count_comparision, aes(x = Freq, fill = approach))+
   geom_bar() +
-  ggtitle("Number of pixels per plot")+
+  ggtitle("Number of pixels in non-buffered plots")+
   xlab("Pixel per Plot") +
   ylab("Counts")+
   facet_wrap(vars(measurement), labeller = labeller(measurement = measurement.labs), scales = "free_x", shrink = TRUE)+
-  scale_fill_manual(values = rep(c("#fa3232", "#3296fa"), 2), name = "Extraction method:")+
+  scale_fill_manual(values = rep(c("#fa3232", "#3296fa"), 2), name = "Extraction method:", labels = c("minimalistic", "weighted"))+
   scale_x_continuous(breaks = seq(0,100, 5))+
   theme(panel.background = element_rect(colour = "#D9D9D9", size = 1.5),
         plot.title = element_text(vjust = 2, hjust = 0.5),
@@ -531,7 +531,7 @@ fviz_eig(pca_all, title = "PCA: all", addlabels = TRUE)
 ###### Individuals {.active}
 
 ```{r}
-annotation <- as.character(factor(paste0(pca_data_all$approach, "_", pca_data_all$buffer), levels = c("flox_FALSE", "minimalistic_FALSE",  "minimalistic_TRUE", "normal_FALSE", "normal_TRUE"), labels = c("FloX", "Minimalistic", "Minimalistic", "Normal", "Normal")))
+annotation <- as.character(factor(paste0(pca_data_all$approach, "_", pca_data_all$buffer), levels = c("flox_FALSE", "minimalistic_FALSE",  "minimalistic_TRUE", "normal_FALSE", "normal_TRUE"), labels = c("FloX", "Minimalistic", "Minimalistic", "Weighted", "Weighted")))
 fviz_pca_ind(pca_all,
              habillage = annotation,
              col.ind = pca_data_all$PlotID,
