@@ -676,8 +676,8 @@ boxplot_comparison_approach <- ggplot(distance_comparision, aes(x = approach, y 
   scale_shape_manual(values = rep(c(2,0),2))+
   scale_fill_manual(values = rep(c("#c8e0e4", "#669999"), 2))+
   ylab("score distance")+
-  xlab("extraction method")+
-  ggtitle("Score distance between FloX and each approach")+
+  scale_x_discrete("extraction method", labels = c("minimalistic" = "minimalistic", "normal" = "weighted"))+
+  ggtitle("Score distance of the minimalistic and weighted extraction method")+
   facet_wrap(resolution ~ ., ncol = 2, labeller = labeller(resolution = resolution.labs))+
   geom_signif(comparisons = list(c("minimalistic","normal")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "less", paired = TRUE), margin_top = 0.1, vjust = 0.4)+
   # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
@@ -691,7 +691,7 @@ boxplot_comparison_approach <- ggplot(distance_comparision, aes(x = approach, y 
         panel.spacing = unit(1.5, "lines"))
 ggsave(plot = boxplot_comparison_approach, filename = "images/boxplot_comparison_approach.png", height = 5, width = 7)
 
-approach.labs <- c("minimalistic extraction method", "normal extraction method")
+approach.labs <- c("minimalistic extraction method", "weighted extraction method")
 names(approach.labs) <- c("minimalistic", "normal")
 boxplot_comparison_resolution <- ggplot(distance_comparision, aes(x = resolution, y = distance, fill = resolution, group = resolution))+
   stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
@@ -701,7 +701,7 @@ boxplot_comparison_resolution <- ggplot(distance_comparision, aes(x = resolution
   scale_shape_manual(values = rep(c(2,0),2))+
   scale_fill_manual(values = rep(c("#c8ea8a", "#528a6c"), 2))+
   ylab("score distance")+
-  ggtitle("Score distance between FloX and each resolution")+
+  ggtitle("Score distance of the low and high resolution data set")+
   scale_x_discrete("", labels = c("low" = "low resolution\n(1m x 1m)", "high" = "high resolution\n(0.5m x 1m)"))+
   facet_wrap(vars(approach), ncol = 2, labeller = labeller(approach = approach.labs))+
   geom_signif(comparisons = list(c("low","high")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "two.sided", paired = TRUE), margin_top = 0.1, vjust = 0.1)+
@@ -718,10 +718,10 @@ ggsave(plot = boxplot_comparison_resolution, filename = "images/boxplot_comparis
 
 ```
 ###### Graphs {.active}
-```{r, fig.cap = "Comparison of the minimalistic and normal extraction methods by using the score distance from FloX to each of the methods of the first two principal components. Separated between the low and high resolution data set. Paired one-sided wilcoxon, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
+```{r, fig.cap = "Comparison of the minimalistic and weighted extraction methods by using the score distance from FloX to each of the methods of the coordinates of the first two principal components. Separated between the low and high resolution data set. Paired one-sided wilcoxon, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
 boxplot_comparison_approach
 ```
-```{r, fig.cap = "Comparison of the low and high resolution data sets by using the score distance from FloX to each of the resolutions with the first two principal components. Separated between the minimalistic and normal extraction method. Paired one-sided wilcoxon, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
+```{r, fig.cap = "Comparison of the low and high resolution data sets by using the score distance from FloX to each of the resolutions with the coordinates of the first two principal components. Separated between the minimalistic and weighted extraction method. Paired one-sided wilcoxon, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
 boxplot_comparison_resolution
 ```
 ##### Buffered data set {.tabset}
@@ -738,8 +738,8 @@ boxplot_comparison_approach_buffered <- ggplot(distance_comparision_buffered, ae
   scale_shape_manual(values = rep(c(2,0),2))+
   scale_fill_manual(values = rep(c("#c8e0e4", "#669999"), 2))+
   ylab("score distance")+
-  xlab("extraction method")+
-  ggtitle("Score distance between FloX and each approach\nusing the buffered plots")+
+  scale_x_discrete("extraction method", labels = c("minimalistic" = "minimalistic", "normal" = "weighted"))+
+  ggtitle("Score distance of the minimalistic and weighted extraction method\nusing the buffered plots")+
   facet_wrap(vars(resolution), ncol = 2, labeller = labeller(resolution = resolution.labs))+
   geom_signif(comparisons = list(c("minimalistic","normal")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "less", paired = TRUE), margin_top = 0.1, vjust = 0.4)+
   # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
@@ -753,7 +753,7 @@ boxplot_comparison_approach_buffered <- ggplot(distance_comparision_buffered, ae
         panel.spacing = unit(1.5, "lines"))
 ggsave(plot = boxplot_comparison_approach_buffered, filename = "images/boxplot_comparison_approach_buffered.png", height = 5, width = 7)
 
-approach.labs <- c("minimalistic extraction method", "normal extraction method")
+approach.labs <- c("minimalistic extraction method", "weighted extraction method")
 names(approach.labs) <- c("minimalistic", "normal")
 boxplot_comparison_resolution_buffered <- ggplot(distance_comparision_buffered, aes(x = resolution, y = distance, fill = resolution, group = resolution))+
   stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
@@ -763,7 +763,7 @@ boxplot_comparison_resolution_buffered <- ggplot(distance_comparision_buffered, 
   scale_shape_manual(values = rep(c(2,0),2))+
   scale_fill_manual(values = rep(c("#c8ea8a", "#528a6c"), 2))+
   ylab("score distance")+
-  ggtitle("Score distance between FloX and each resolution\nusing the buffered plots")+
+  ggtitle("Score distance of the low and high resolution data set\nusing the buffered plots")+
   scale_x_discrete("", labels = c("low" = "low resolution\n(1m x 1m)", "high" = "high resolution\n(0.5m x 1m)"))+
   facet_wrap(vars(approach), ncol = 2, labeller = labeller(approach = approach.labs))+
   geom_signif(comparisons = list(c("low","high")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "two.sided", paired = TRUE), margin_top = 0.1, vjust = 0.1)+
@@ -780,10 +780,10 @@ ggsave(plot = boxplot_comparison_resolution_buffered, filename = "images/boxplot
 
 ```
 ###### Graphs {.active}
-```{r, fig.cap = "Comparison of the minimalistic and normal extraction methods by using the score distance from FloX to each of the methods of the first two principal components. Separated between the low and high resolution data set using the buffered plots. Paired one-sided wilcoxon, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
+```{r, fig.cap = "Comparison of the minimalistic and weighted extraction methods by using the score distance from FloX to each of the methods of the coordinates of the first two principal components. Separated between the low and high resolution data set using the buffered plots. Paired one-sided wilcoxon, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
 boxplot_comparison_approach_buffered
 ```
-```{r, fig.cap = "Comparison of the low and high resolution data sets by using the score distance from FloX to each of the resolutions with the first two principal components. Separated between the minimalistic and normal extraction method using the buffered plots. Paired one-sided wilcoxon, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
+```{r, fig.cap = "Comparison of the low and high resolution data sets by using the score distance from FloX to each of the resolutions with the coordinates of the first two principal components. Separated between the minimalistic and weighted extraction method using the buffered plots. Paired one-sided wilcoxon, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
 boxplot_comparison_resolution_buffered
 ```
 ##### Unbuffered vs. buffered {.tabset}
@@ -791,7 +791,7 @@ boxplot_comparison_resolution_buffered
 ###### Code
 ```{r}
 # Plotting the difference of the distances
-approach.labs <- c("minimalistic extraction method", "normal extraction method")
+approach.labs <- c("minimalistic extraction method", "weighted extraction method")
 names(approach.labs) <- c("minimalistic", "normal")
 boxplot_comparison_non_vs_buffered <- ggplot(filter(comparison_distance_non_vs_buffered, resolution == "high"), aes(x = buffer, y = distance, fill = buffer, group = buffer))+
   stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
@@ -802,7 +802,7 @@ boxplot_comparison_non_vs_buffered <- ggplot(filter(comparison_distance_non_vs_b
   scale_fill_manual(values = rep(c("#e69e56", "#b84646"), 2))+
   ylab("score distance")+
   scale_x_discrete("")+
-  ggtitle("Score distance between FloX and non-buffered/buffered plots\nusing the high resolution data set")+
+  ggtitle("Score distance of the non-buffered and buffered plots\nusing the high resolution data set")+
   facet_wrap(vars(approach), ncol = 2, labeller = labeller(approach = approach.labs))+
   geom_signif(comparisons = list(c("buffered", "non-buffered")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "less", paired = TRUE), margin_top = 0.1, vjust = 0.4)+
   # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
@@ -817,7 +817,7 @@ boxplot_comparison_non_vs_buffered <- ggplot(filter(comparison_distance_non_vs_b
 ggsave(plot = boxplot_comparison_non_vs_buffered, filename = "images/boxplot_comparison_non_vs_buffered.png", height = 5, width = 7)
 ```
 ###### Graphs {.active}
-```{r, fig.cap = "Comparison of the non-buffered and buffered plots by using the score distance from FloX to each of the approaches with the first two principal components. Separated between the minimalistic and normal extraction method using the high resolution data set. Paired one-sided wilcoxon, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
+```{r, fig.cap = "Comparison of the non-buffered and buffered plots by using the score distance from FloX to each of the approaches with the coordinates of the first two principal components. Separated between the minimalistic and weighted extraction method using the high resolution data set. Paired one-sided wilcoxon, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
 boxplot_comparison_non_vs_buffered
 ```
 
