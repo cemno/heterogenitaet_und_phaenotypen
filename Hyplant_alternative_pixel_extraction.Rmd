@@ -665,50 +665,56 @@ print(paste("p.value:",t_test_norm_1242_1229$p.value))
 ##### Unbuffered data set {.tabset}
 ###### Code
 ```{r, results='hide'}
-  # Plotting the difference of the distances
-  resolution.labs <- c("low resolution (1m x 1m)", "high resolution (0.5m x 1m)")
-  names(resolution.labs) <- c("low", "high")
-  boxplot_comparison_approach <- ggplot(distance_comparision, aes(x = approach, y = distance, fill = approach, group = approach))+
-    stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
-    geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge")+
-    scale_fill_manual(values = rep(c("#c8e0e4", "#669999"), 2))+
-    ylab("score distance")+
-    xlab("extraction method")+
-    ggtitle("Score distance between FloX and each approach")+
-    facet_wrap(resolution ~ ., ncol = 2, labeller = labeller(resolution = resolution.labs))+
-    geom_signif(comparisons = list(c("minimalistic","normal")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "less", paired = TRUE), margin_top = 0.1, vjust = 0.4)+
-    # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
-    theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
-          panel.grid = element_line(colour = "#D9D9D9"),
-          plot.title = element_text(vjust = 2, hjust = 0.5),
-          axis.title.y = element_text(vjust = 2),
-          axis.title.x = element_text(vjust = -1),
-          axis.text.x = element_text(size = 10),
-          strip.text = element_text(size = 12),
-          panel.spacing = unit(1.5, "lines"))
-  ggsave(plot = boxplot_comparison_approach, filename = "images/boxplot_comparison_approach.png")
-  
-  approach.labs <- c("minimalistic extraction method", "normal extraction method")
-  names(approach.labs) <- c("minimalistic", "normal")
-  boxplot_comparison_resolution <- ggplot(distance_comparision, aes(x = resolution, y = distance, fill = resolution, group = resolution))+
-    stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
-    geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge")+
-    scale_fill_manual(values = rep(c("#c8ea8a", "#528a6c"), 2))+
-    ylab("score distance")+
-    ggtitle("Score distance between FloX and each resolution")+
-    scale_x_discrete("", labels = c("low" = "low resolution\n(1m x 1m)", "high" = "high resolution\n(0.5m x 1m)"))+
-    facet_wrap(vars(approach), ncol = 2, labeller = labeller(approach = approach.labs))+
-    geom_signif(comparisons = list(c("low","high")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "two.sided", paired = TRUE), margin_top = 0.1, vjust = 0.1)+
-    # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
-    theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
-          panel.grid = element_line(colour = "#D9D9D9"),
-          plot.title = element_text(vjust = 2, hjust = 0.5),
-          axis.title.y = element_text(vjust = 2),
-          axis.title.x = element_text(vjust = -1),
-          axis.text.x = element_text(size = 10),
-          strip.text = element_text(size = 12),
-          panel.spacing = unit(1.5, "lines"))
-  ggsave(plot = boxplot_comparison_resolution, filename = "images/boxplot_comparison_resolution.png")
+# Plotting the difference of the distances
+resolution.labs <- c("low resolution (1m x 1m)", "high resolution (0.5m x 1m)")
+names(resolution.labs) <- c("low", "high")
+boxplot_comparison_approach <- ggplot(distance_comparision, aes(x = approach, y = distance, fill = approach, group = approach))+
+  stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
+  geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge", outlier.alpha = 0)+
+  geom_point(aes(shape = approach), show.legend = FALSE, position = position_dodge2(width = 0.1))+
+  geom_line(aes(group = PlotID), linetype = "dotted", size = 0.4, position = position_dodge2(width = 0.1))+
+  scale_shape_manual(values = rep(c(2,0),2))+
+  scale_fill_manual(values = rep(c("#c8e0e4", "#669999"), 2))+
+  ylab("score distance")+
+  xlab("extraction method")+
+  ggtitle("Score distance between FloX and each approach")+
+  facet_wrap(resolution ~ ., ncol = 2, labeller = labeller(resolution = resolution.labs))+
+  geom_signif(comparisons = list(c("minimalistic","normal")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "less", paired = TRUE), margin_top = 0.1, vjust = 0.4)+
+  # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
+  theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
+        panel.grid = element_line(colour = "#D9D9D9"),
+        plot.title = element_text(vjust = 2, hjust = 0.5),
+        axis.title.y = element_text(vjust = 2),
+        axis.title.x = element_text(vjust = -1),
+        axis.text.x = element_text(size = 10),
+        strip.text = element_text(size = 12),
+        panel.spacing = unit(1.5, "lines"))
+ggsave(plot = boxplot_comparison_approach, filename = "images/boxplot_comparison_approach.png", height = 5, width = 7)
+
+approach.labs <- c("minimalistic extraction method", "normal extraction method")
+names(approach.labs) <- c("minimalistic", "normal")
+boxplot_comparison_resolution <- ggplot(distance_comparision, aes(x = resolution, y = distance, fill = resolution, group = resolution))+
+  stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
+  geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge", outlier.alpha = 0)+
+  geom_point(aes(shape = resolution), show.legend = FALSE, position = position_dodge2(width = 0.1))+
+  geom_line(aes(group = PlotID), linetype = "dotted", size = 0.4, position = position_dodge2(width = 0.1))+
+  scale_shape_manual(values = rep(c(2,0),2))+
+  scale_fill_manual(values = rep(c("#c8ea8a", "#528a6c"), 2))+
+  ylab("score distance")+
+  ggtitle("Score distance between FloX and each resolution")+
+  scale_x_discrete("", labels = c("low" = "low resolution\n(1m x 1m)", "high" = "high resolution\n(0.5m x 1m)"))+
+  facet_wrap(vars(approach), ncol = 2, labeller = labeller(approach = approach.labs))+
+  geom_signif(comparisons = list(c("low","high")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "two.sided", paired = TRUE), margin_top = 0.1, vjust = 0.1)+
+  # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
+  theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
+        panel.grid = element_line(colour = "#D9D9D9"),
+        plot.title = element_text(vjust = 2, hjust = 0.5),
+        axis.title.y = element_text(vjust = 2),
+        axis.title.x = element_text(vjust = -1),
+        axis.text.x = element_text(size = 10),
+        strip.text = element_text(size = 12),
+        panel.spacing = unit(1.5, "lines"))
+ggsave(plot = boxplot_comparison_resolution, filename = "images/boxplot_comparison_resolution.png", height = 5, width = 7)
 
 ```
 ###### Graphs {.active}
@@ -721,50 +727,56 @@ boxplot_comparison_resolution
 ##### Buffered data set {.tabset}
 ###### Code
 ```{r, results='hide'}
-  # Plotting the difference of the distances
-  resolution.labs <- c("low resolution (1m x 1m)", "high resolution (0.5m x 1m)")
-  names(resolution.labs) <- c("low", "high")
-  boxplot_comparison_approach_buffered <- ggplot(distance_comparision_buffered, aes(x = approach, y = distance, fill = approach, group = approach))+
-    stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
-    geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge")+
-    scale_fill_manual(values = rep(c("#c8e0e4", "#669999"), 2))+
-    ylab("score distance")+
-    xlab("extraction method")+
-    ggtitle("Score distance between FloX and each approach\nusing the buffered plots")+
-    facet_wrap(vars(resolution), ncol = 2, labeller = labeller(resolution = resolution.labs))+
-    geom_signif(comparisons = list(c("minimalistic","normal")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "less", paired = TRUE), margin_top = 0.1, vjust = 0.4)+
-    # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
-    theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
-          panel.grid = element_line(colour = "#D9D9D9"),
-          plot.title = element_text(vjust = 2, hjust = 0.5),
-          axis.title.y = element_text(vjust = 2),
-          axis.title.x = element_text(vjust = -1),
-          axis.text.x = element_text(size = 10),
-          strip.text = element_text(size = 12, colour = "#941919"),
-          panel.spacing = unit(1.5, "lines"))
-  ggsave(plot = boxplot_comparison_approach, filename = "images/boxplot_comparison_approach.png")
-  
-  approach.labs <- c("minimalistic extraction method", "normal extraction method")
-  names(approach.labs) <- c("minimalistic", "normal")
-  boxplot_comparison_resolution_buffered <- ggplot(distance_comparision_buffered, aes(x = resolution, y = distance, fill = resolution, group = resolution))+
-    stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
-    geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge")+
-    scale_fill_manual(values = rep(c("#c8ea8a", "#528a6c"), 2))+
-    ylab("score distance")+
-    ggtitle("Score distance between FloX and each resolution\nusing the buffered plots")+
-    scale_x_discrete("", labels = c("low" = "low resolution\n(1m x 1m)", "high" = "high resolution\n(0.5m x 1m)"))+
-    facet_wrap(vars(approach), ncol = 2, labeller = labeller(approach = approach.labs))+
-    geom_signif(comparisons = list(c("low","high")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "two.sided", paired = TRUE), margin_top = 0.1, vjust = 0.1)+
-    # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
-    theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
-          panel.grid = element_line(colour = "#D9D9D9"),
-          plot.title = element_text(vjust = 2, hjust = 0.5),
-          axis.title.y = element_text(vjust = 2),
-          axis.title.x = element_text(vjust = -1),
-          axis.text.x = element_text(size = 10),
-          strip.text = element_text(size = 12, colour = "#941919"),
-          panel.spacing = unit(1.5, "lines"))
-  ggsave(plot = boxplot_comparison_resolution, filename = "images/boxplot_comparison_resolution.png")
+# Plotting the difference of the distances
+resolution.labs <- c("low resolution (1m x 1m)", "high resolution (0.5m x 1m)")
+names(resolution.labs) <- c("low", "high")
+boxplot_comparison_approach_buffered <- ggplot(distance_comparision_buffered, aes(x = approach, y = distance, fill = approach, group = approach))+
+  stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
+  geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge", outlier.alpha = 0)+
+  geom_point(aes(shape = approach), show.legend = FALSE, position = position_dodge2(width = 0.1))+
+  geom_line(aes(group = PlotID), linetype = "dotted", size = 0.4, position = position_dodge2(width = 0.1))+
+  scale_shape_manual(values = rep(c(2,0),2))+
+  scale_fill_manual(values = rep(c("#c8e0e4", "#669999"), 2))+
+  ylab("score distance")+
+  xlab("extraction method")+
+  ggtitle("Score distance between FloX and each approach\nusing the buffered plots")+
+  facet_wrap(vars(resolution), ncol = 2, labeller = labeller(resolution = resolution.labs))+
+  geom_signif(comparisons = list(c("minimalistic","normal")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "less", paired = TRUE), margin_top = 0.1, vjust = 0.4)+
+  # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
+  theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
+        panel.grid = element_line(colour = "#D9D9D9"),
+        plot.title = element_text(vjust = 2, hjust = 0.5),
+        axis.title.y = element_text(vjust = 2),
+        axis.title.x = element_text(vjust = -1),
+        axis.text.x = element_text(size = 10),
+        strip.text = element_text(size = 12, colour = "#941919"),
+        panel.spacing = unit(1.5, "lines"))
+ggsave(plot = boxplot_comparison_approach, filename = "images/boxplot_comparison_approach_buffered.png", height = 5, width = 7)
+
+approach.labs <- c("minimalistic extraction method", "normal extraction method")
+names(approach.labs) <- c("minimalistic", "normal")
+boxplot_comparison_resolution_buffered <- ggplot(distance_comparision_buffered, aes(x = resolution, y = distance, fill = resolution, group = resolution))+
+  stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
+  geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge", outlier.alpha = 0)+
+  geom_point(aes(shape = resolution), show.legend = FALSE, position = position_dodge2(width = 0.1))+
+  geom_line(aes(group = PlotID), linetype = "dotted", size = 0.4, position = position_dodge2(width = 0.1))+
+  scale_shape_manual(values = rep(c(2,0),2))+
+  scale_fill_manual(values = rep(c("#c8ea8a", "#528a6c"), 2))+
+  ylab("score distance")+
+  ggtitle("Score distance between FloX and each resolution\nusing the buffered plots")+
+  scale_x_discrete("", labels = c("low" = "low resolution\n(1m x 1m)", "high" = "high resolution\n(0.5m x 1m)"))+
+  facet_wrap(vars(approach), ncol = 2, labeller = labeller(approach = approach.labs))+
+  geom_signif(comparisons = list(c("low","high")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "two.sided", paired = TRUE), margin_top = 0.1, vjust = 0.1)+
+  # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
+  theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#D9D9D9", size = 1),
+        panel.grid = element_line(colour = "#D9D9D9"),
+        plot.title = element_text(vjust = 2, hjust = 0.5),
+        axis.title.y = element_text(vjust = 2),
+        axis.title.x = element_text(vjust = -1),
+        axis.text.x = element_text(size = 10),
+        strip.text = element_text(size = 12, colour = "#941919"),
+        panel.spacing = unit(1.5, "lines"))
+ggsave(plot = boxplot_comparison_resolution, filename = "images/boxplot_comparison_resolution_buffered.png", height = 5, width = 7)
 
 ```
 ###### Graphs {.active}
@@ -781,13 +793,16 @@ boxplot_comparison_resolution_buffered
 # Plotting the difference of the distances
 approach.labs <- c("minimalistic extraction method", "normal extraction method")
 names(approach.labs) <- c("minimalistic", "normal")
-boxplot_comparison_non_vs_buffered <- ggplot(comparison_distance_non_vs_buffered, aes(x = buffer, y = distance, fill = buffer, group = buffer))+
+boxplot_comparison_non_vs_buffered <- ggplot(filter(comparison_distance_non_vs_buffered, resolution == "high"), aes(x = buffer, y = distance, fill = buffer, group = buffer))+
   stat_boxplot(geom = "errorbar", size = 0.3, width = 0.1)+
-  geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge")+
+  geom_boxplot(show.legend = FALSE, size = 0.3, position = "dodge", outlier.alpha = 0)+
+  geom_point(aes(shape = buffer), show.legend = FALSE, position = position_dodge2(width = 0.1))+
+  geom_line(aes(group = PlotID), linetype = "dotted", size = 0.4, position = position_dodge2(width = 0.1))+
+  scale_shape_manual(values = rep(c(2,0),2))+
   scale_fill_manual(values = rep(c("#e69e56", "#b84646"), 2))+
   ylab("score distance")+
   scale_x_discrete("")+
-  ggtitle("Score distance between FloX and non-buffered/buffered")+
+  ggtitle("Score distance between FloX and non-buffered/buffered plots\nusing the high resolution data set")+
   facet_wrap(vars(approach), ncol = 2, labeller = labeller(approach = approach.labs))+
   geom_signif(comparisons = list(c("Buffered", "Non-buffered")), map_signif_level = TRUE, test = "wilcox.test", test.args = list(alternative = "less", paired = TRUE), margin_top = 0.1, vjust = 0.4)+
   # For actual p.values instead of * use: map_signif_level = function(p) sprintf("p = %.2g", p)
@@ -799,10 +814,10 @@ boxplot_comparison_non_vs_buffered <- ggplot(comparison_distance_non_vs_buffered
         axis.text.x = element_text(size = 10),
         strip.text = element_text(size = 12),
         panel.spacing = unit(1.5, "lines"))
-ggsave(plot = boxplot_comparison_non_vs_buffered, filename = "images/boxplot_comparison_non_vs_buffered.png")
+ggsave(plot = boxplot_comparison_non_vs_buffered, filename = "images/boxplot_comparison_non_vs_buffered.png", height = 5, width = 7)
 ```
 ###### Graphs {.active}
-```{r, fig.cap = "Comparison of the non-buffered and buffered plots by using the score distance from FloX to each of the approaches with the first two principal components. Separated between the minimalistic and normal extraction method using both resolution data sets. Paired one-sided wilcoxon, n = 30, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
+```{r, fig.cap = "Comparison of the non-buffered and buffered plots by using the score distance from FloX to each of the approaches with the first two principal components. Separated between the minimalistic and normal extraction method using the high resolution data set. Paired one-sided wilcoxon, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 ."}
 boxplot_comparison_non_vs_buffered
 ```
 
