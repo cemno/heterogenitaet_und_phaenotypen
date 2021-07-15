@@ -30,12 +30,12 @@ The data extraction of raster files is easily done with the help of a few packag
 
 ```{r}
 library(raster)
-library(tidyverse)
 library(sf)
 library(ggpubr)
 library(stringr)
 library(hyperSpec)
 library(lubridate)
+library(tidyverse)
 ```
 
 #### Starting Cluster
@@ -247,11 +247,11 @@ colnames(spc_1242_normal_df) <- append("PlotID", as.character(seq(390, 940, 1)))
 ```{r}
 library(lubridate)
 library(readxl)
-library(tidyverse)
 library(hyperSpec)
 library(factoextra)
 library(ggsignif)
 library(ggpubr)
+library(tidyverse)
 ```
   
 #### Spectral plots {.tabset}
@@ -519,7 +519,7 @@ pca_data_all <- rbind(data_for_pca, filter(data_for_pca_buffered, !(measurement 
 # Add row names to distinguish data points later on
 rownames(pca_data_all) = make.names(pca_data_all[,1], unique=TRUE)
 pca_all <- prcomp(pca_data_all[,-c(1:5)], scale = TRUE)
-summary(pca_all)
+#summary(pca_all)
 ```
 
 ###### Eigenvalues 
