@@ -711,8 +711,7 @@ print(paste("p.value:", format(t_test_norm_1242_1229$p.value, format = "e", digi
 #### Results {.tabset}
 ##### Unbuffered data set 
 The first comparison is between the two extraction methods at different resolutions with the non-buffered data set. This can be considered the worst case for the weighted extraction method, as it includes pixels that are partially outside the plot. At the same time the minimalistic extraction method does only includes pixels completely inside, which is some kind of a buffer itself. Thus, in this scenario the difference in the score distance between the both extraction method is highly significant in at both resolutions, with the minimalistic method being closer to the reference value produced by FloX. One can see the clear trend by lines indicating the pairwise comparison.
-<div class = "fold s">
-```{r}
+```{r, non-buffered-comp-method, echo=FALSE}
 # Plotting the difference of the distances
 resolution.labs <- c("low resolution (1m x 1m)", "high resolution (0.5m x 1m)")
 names(resolution.labs) <- c("low", "high")
@@ -739,14 +738,16 @@ boxplot_comparison_approach <- ggplot(distance_comparision, aes(x = approach, y 
         panel.spacing = unit(1.5, "lines"))
 ggsave(plot = boxplot_comparison_approach, filename = "images/boxplot_comparison_approach.png", height = 5, width = 7)
 ```
-</div>
 
 ```{r, fig.cap = "Comparison of the minimalistic and weighted extraction methods by using the score distance from FloX to each of the extraction methods of the coordinates of the first two principal components. Separated between the low and high resolution data set. Paired one-sided Wilcoxon test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 .", echo = FALSE}
 boxplot_comparison_approach
 ```
-Using the high resolution (0.5 m x 1 m) data set instead of the low resolution (1 m x 1 m) data set does not improve the score distance for neither extraction method using the non-buffered plots. The score distance of the same points is sometimes bigger or smaller than its counterpart in the other data set. No clear Trend can be seen nor calculated. It is irrelevant which resolution we use regardless of the extraction method, when using the non-buffered plots.
 <div class = "fold s">
-```{r}
+```{r, non-buffered-comp-method, eval=FALSE}
+```
+</div>
+Using the high resolution (0.5 m x 1 m) data set instead of the low resolution (1 m x 1 m) data set does not improve the score distance for neither extraction method using the non-buffered plots. The score distance of the same points is sometimes bigger or smaller than its counterpart in the other data set. No clear Trend can be seen nor calculated. It is irrelevant which resolution we use regardless of the extraction method, when using the non-buffered plots.
+```{r, non-buffered-comp-res, echo=FALSE}
 # Plotting the difference of distances
 approach.labs <- c("minimalistic extraction method", "weighted extraction method")
 names(approach.labs) <- c("minimalistic", "normal")
@@ -774,14 +775,19 @@ boxplot_comparison_resolution <- ggplot(distance_comparision, aes(x = resolution
 ggsave(plot = boxplot_comparison_resolution, filename = "images/boxplot_comparison_resolution.png", height = 5, width = 7)
 
 ```
-</div>
+
 ```{r, fig.cap = "Comparison of the low and high resolution data sets by using the score distance from FloX to each of the resolutions with the coordinates of the first two principal components. Separated between the minimalistic and weighted extraction method. Paired one-sided Wilcoxon test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 .", echo = FALSE}
 boxplot_comparison_resolution
 ```
+<div class = "fold s">
+```{r, non-buffered-comp-res, eval=FALSE}
+```
+</div>
+
 ##### Buffered data set {.tabset}
 With the buffered plots the improvement of the minimalistic extraction method diminishes, at least with the low resolution (1 m x 1 m) data set. With a p-value of 0.019 one can only see a slight significant difference between the two extraction methods using a paired one-sided Wilcoxon test. Using the high resolution (0.5 m x 1 m) data set on the other hand greatly improves the score distance of the  minimalistic extraction method in comparison to the weighted extraction method. With a p-value of 0.00035 and a clear visual difference this is a great improvement. The minimalistic method also led to the lowest average score distance of any combination of data sets.
-<div class = "fold s">
-```{r}
+
+```{r, buffered-comp-method, echo=FALSE}
 # Plotting the difference of the distances
 resolution.labs <- c("low resolution (1m x 1m)", "high resolution (0.5m x 1m)")
 names(resolution.labs) <- c("low", "high")
@@ -808,13 +814,18 @@ boxplot_comparison_approach_buffered <- ggplot(distance_comparision_buffered, ae
         panel.spacing = unit(1.5, "lines"))
 ggsave(plot = boxplot_comparison_approach_buffered, filename = "images/boxplot_comparison_approach_buffered.png", height = 5, width = 7)
 ```
-</div>
+
 ```{r, fig.cap = "Comparison of the minimalistic and weighted extraction methods by using the score distance from FloX to each of the extraction methods of the coordinates of the first two principal components. Separated between the low and high resolution data set using the buffered plots. Paired one-sided Wilcoxon test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 .", echo = FALSE}
 boxplot_comparison_approach_buffered
 ```
-Checking on a significant improvement of the high resolution (0.5 m x 1 m) data set over the lower one (1 m x 1 m) we can confirm, with a p-value of 0.012, a slightly positive reduction of the score distance with the minimalistic extraction method. The weighted extraction method does not show a significant reduction in score distance using the higher resolution data set and the buffered plots.
 <div class = "fold s">
-```{r}
+```{r, buffered-comp-method, eval=FALSE}
+```
+</div>
+
+Checking on a significant improvement of the high resolution (0.5 m x 1 m) data set over the lower one (1 m x 1 m) we can confirm, with a p-value of 0.012, a slightly positive reduction of the score distance with the minimalistic extraction method. The weighted extraction method does not show a significant reduction in score distance using the higher resolution data set and the buffered plots.
+
+```{r, buffered-comp-res, echo=FALSE}
 # Plotting the difference of the distances
 approach.labs <- c("minimalistic extraction method", "weighted extraction method")
 names(approach.labs) <- c("minimalistic", "normal")
@@ -842,14 +853,17 @@ boxplot_comparison_resolution_buffered <- ggplot(distance_comparision_buffered, 
 ggsave(plot = boxplot_comparison_resolution_buffered, filename = "images/boxplot_comparison_resolution_buffered.png", height = 5, width = 7)
 
 ```
-</div>
+
 ```{r, fig.cap = "Comparison of the low and high resolution data sets by using the score distance from FloX to each of the resolutions with the coordinates of the first two principal components. Separated between the minimalistic and weighted extraction method using the buffered plots. Paired one-sided Wilcoxon test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 .", echo = FALSE}
 boxplot_comparison_resolution_buffered
 ```
+<div class = "fold s">
+```{r, buffered-comp-res, eval=TRUE}
+```
+</div>
 ##### Unbuffered vs. buffered 
 Using the buffered instead of the non-buffered plots reduced the score distance significantly for the weighted extraction method regardless of which resolution set was being used. For the minimalistic extraction method there was no significant improvement using buffered data with the low resolution data set. 
-<div class = "fold s">
-```{r}
+```{r, buffered-non-buffered-low-res, echo=FALSE}
 # Plotting the difference of the distances
 approach.labs <- c("minimalistic extraction method", "weighted extraction method")
 names(approach.labs) <- c("minimalistic", "normal")
@@ -877,16 +891,17 @@ boxplot_comparison_non_vs_buffered_low_res <- ggplot(filter(comparison_distance_
         panel.spacing = unit(1.5, "lines"))
 ggsave(plot = boxplot_comparison_non_vs_buffered_low_res, filename = "images/boxplot_comparison_non_vs_buffered_low_res.png", height = 5, width = 7)
 ```
-</div>
 
 ```{r, fig.cap = "Comparison of the non-buffered and buffered plots by using the score distance from FloX to each of the non-buffered and buffered plots with the coordinates of the first two principal components. Separated between the minimalistic and weighted extraction method using the low resolution data set. Paired one-sided Wilcoxon test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 .", echo = FALSE}
 boxplot_comparison_non_vs_buffered_low_res
 ```
-Using the high resolution data set on the other hand still let to a significant reduction of score distance even for the minimalistic extraction method. With the high resolution data set the score distance was always significantly improved by using the buffered plots. 
 <div class = "fold s">
-```{r}
-lines <- list(bquote("Score distance of the non-buffered and buffered plots"),
-              bquote("using the "~bold("high")~" resolution data set"))
+```{r, buffered-non-buffered-low-res, eval=FALSE}
+```
+</div>
+Using the high resolution data set on the other hand still let to a significant reduction of score distance even for the minimalistic extraction method. With the high resolution data set the score distance was always significantly improved by using the buffered plots. 
+
+```{r, buffered-non-buffered-high-res, echo=FALSE}
 # Plotting the difference of the distances
 approach.labs <- c("minimalistic extraction method", "weighted extraction method")
 names(approach.labs) <- c("minimalistic", "normal")
@@ -914,8 +929,11 @@ boxplot_comparison_non_vs_buffered_high_res <- ggplot(filter(comparison_distance
         panel.spacing = unit(1.5, "lines"))
 ggsave(plot = boxplot_comparison_non_vs_buffered_high_res, filename = "images/boxplot_comparison_non_vs_buffered_high_res.png", height = 5, width = 7)
 ```
-</div>
 
 ```{r, fig.cap = "Comparison of the non-buffered and buffered plots by using the score distance from FloX to each of the non-buffered and buffered plots with the coordinates of the first two principal components. Separated between the minimalistic and weighted extraction method using the high resolution data set. Paired one-sided Wilcoxon test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 .", echo = FALSE}
 boxplot_comparison_non_vs_buffered_high_res
 ```
+<div class = "fold s">
+```{r, buffered-non-buffered-high-res, eval=FALSE}
+```
+</div>
