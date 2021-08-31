@@ -638,16 +638,24 @@ comparison_distance_non_vs_buffered$buffer <- factor(comparison_distance_non_vs_
 #### Test for normality
 ```{r}
 # Unbuffered
-shapiro.test(filter(distance_comparision, resolution == "low" & approach == "minimalistic")$distance)
-shapiro.test(filter(distance_comparision, resolution == "low" & approach == "normal")$distance)
-shapiro.test(filter(distance_comparision, resolution == "high" & approach == "minimalistic")$distance)
-shapiro.test(filter(distance_comparision, resolution == "high" & approach == "normal")$distance)
+shapiro.test(filter(distance_comparision, resolution == "low" &
+                      approach == "minimalistic")$distance)
+shapiro.test(filter(distance_comparision, resolution == "low" &
+                      approach == "normal")$distance)
+shapiro.test(filter(distance_comparision, resolution == "high" &
+                      approach == "minimalistic")$distance)
+shapiro.test(filter(distance_comparision, resolution == "high" &
+                      approach == "normal")$distance)
 
 # Using buffered Data
-shapiro.test(filter(distance_comparision_buffered, resolution == "low" & approach == "minimalistic")$distance)
-shapiro.test(filter(distance_comparision_buffered, resolution == "low" & approach == "normal")$distance)
-shapiro.test(filter(distance_comparision_buffered, resolution == "high" & approach == "minimalistic")$distance)
-shapiro.test(filter(distance_comparision_buffered, resolution == "high" & approach == "normal")$distance)
+shapiro.test(filter(distance_comparision_buffered, resolution == "low" &
+                      approach == "minimalistic")$distance)
+shapiro.test(filter(distance_comparision_buffered, resolution == "low" &
+                      approach == "normal")$distance)
+shapiro.test(filter(distance_comparision_buffered, resolution == "high" &
+                      approach == "minimalistic")$distance)
+shapiro.test(filter(distance_comparision_buffered, resolution == "high" &
+                      approach == "normal")$distance)
 ```
 
 ##### One sided t-test to compare methods and resolutions with each other.
@@ -899,7 +907,7 @@ boxplot_comparison_non_vs_buffered_low_res
 ```{r, buffered-non-buffered-low-res, eval=FALSE}
 ```
 </div>
-Using the high resolution data set on the other hand still let to a significant reduction of score distance even for the minimalistic extraction method. With the high resolution data set the score distance was always significantly improved by using the buffered plots. 
+Using the high resolution data set on the other hand still let to a significant reduction of score distance even for the minimalistic extraction method. With the high resolution data set the score distance was always significantly improved by using the buffered plots.
 
 ```{r, buffered-non-buffered-high-res, echo=FALSE}
 # Plotting the difference of the distances
