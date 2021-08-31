@@ -64,10 +64,10 @@ plots_1229 <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1229.shp")
 plots_1242 <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1242.shp")
 
 # Creating a buffer for a second run
-#buffer <- TRUE
-#plots_1229 <- sf::st_buffer(plots_1229, dist = -0.3, endCapStyle = "SQUARE")
+buffer <- TRUE
+plots_1229 <- sf::st_buffer(plots_1229, dist = -0.3, endCapStyle = "SQUARE")
 #write_sf(plots_1229, "Erfassung_Phänotypen2021/Shapefiles/Barley_1229_buffered_30_cm.shp")
-#plots_1242 <- sf::st_buffer(plots_1242, dist = -0.3, endCapStyle = "SQUARE")
+plots_1242 <- sf::st_buffer(plots_1242, dist = -0.3, endCapStyle = "SQUARE")
 #write_sf(plots_1242, "Erfassung_Phänotypen2021/Shapefiles/Barley_1242_buffered_30_cm.shp")
 
 # Assign ID
@@ -385,7 +385,7 @@ Occurrences of pixel count per plot within big and small plots
 measurement.labs <- c("low resolution (1m x 1m)", "high resolution (0.5m x 1m)")
 names(measurement.labs) <- c("1229", "1242")
 
-ggplot(pixel_count_comparision, aes(x = Freq, fill = approach))+
+pixel_count <- ggplot(pixel_count_comparision, aes(x = Freq, fill = approach))+
   geom_bar() +
   ggtitle("Number of pixels in non-buffered plots")+
   xlab("Pixel per Plot") +
@@ -401,7 +401,11 @@ ggplot(pixel_count_comparision, aes(x = Freq, fill = approach))+
         strip.text = element_text(size = 12),
         panel.spacing = unit(3, "lines"),
         legend.position = "bottom")
-
+if (buffer == FALSE){
+  ggsave(plot = pixel_count, filename = "images/pixel_count.png", height = 4, width = 7)
+}else{
+    ggsave(plot = pixel_count, filename = "images/pixel_count_buffered.png", height = 4, width = 7)
+}
 ```
 
 <!--Warning mechanism if any Plots don't have a single pixel -->
@@ -531,14 +535,16 @@ pca_all <- prcomp(pca_data_all[,-c(1:5)], scale = TRUE)
 ###### Eigenvalues 
 
 ```{r}
-fviz_eig(pca_all, title = "PCA: all", addlabels = TRUE)
+pca_eigen <- fviz_eig(pca_all, title = "PCA: all", addlabels = TRUE)
+ggsave(plot = pca_eigen, filename = "images/pca_eigen.png", height = 5, width = 7)
+pca_eigen
 ```
 
 ###### Individuals {.active}
 
 ```{r}
 annotation <- as.character(factor(paste0(pca_data_all$approach, "_", pca_data_all$buffer), levels = c("flox_FALSE", "minimalistic_FALSE",  "minimalistic_TRUE", "normal_FALSE", "normal_TRUE"), labels = c("FloX", "Minimalistic", "Minimalistic", "Weighted", "Weighted")))
-fviz_pca_ind(pca_all,
+pca_ind <- fviz_pca_ind(pca_all,
              habillage = annotation,
              col.ind = pca_data_all$PlotID,
              label = "ind.sup",
@@ -547,6 +553,8 @@ fviz_pca_ind(pca_all,
              addEllipses = TRUE,
              ggtheme = theme_minimal()
              )
+ggsave(plot = pca_ind, filename = "images/pca_ind.png", height = 5, width = 7)
+pca_ind
 ```
 
 ##### Calculating coordinates
