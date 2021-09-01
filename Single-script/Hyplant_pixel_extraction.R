@@ -1,38 +1,3 @@
----
-title: "Hyplant minimalistic approach for pixel extraction"
-author: "Clemens Stephany, Adrian FÃ¼lle"
-date: "`r Sys.Date()`"
-output:
-  html_document: 
-    css: layout/button.css
-    collapse: TRUE
----
-<style>
-p.caption {
-  font-family: Times, "Times New Roman", Georgia, serif;
-  font-size: 0.9em;
-  font-style: italic;
-}
-</style>
-<script src="layout/hideOutput.js"></script>
-
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, results = 'hide', message = FALSE, warning = FALSE)
-library(knitr)
-```
-
-
-## Introduction
-
-
-### Data Extraction in R
-
-The data extraction of raster files is easily done with the help of a few packages. The most important one is the `raster` package, which enables us to parse through the raster file and extract all pixel values within a polygon (or other shapes) provided by a [shapefile](https://en.wikipedia.org/wiki/Shapefile).
-
-#### Loading required libraries
-
-```{r}
 library(raster)
 library(sf)
 library(ggpubr)
@@ -40,64 +5,66 @@ library(stringr)
 library(hyperSpec)
 library(lubridate)
 library(tidyverse)
-```
-
-#### Starting Cluster
-
-```{r}
 require(snow)
-threads <- 3
+
+
+
+#### Opening cluster (optional)
+threads <- 7
 beginCluster(n = threads)
 rm(threads)
-```
+
+
 
 #### Loading in required files
-
-```{r}
 # Radiance Raster
-radiance_1229_600 <- brick("Erfassung_PhÃ¤notypen2021/HyPlant data/12:29/20180629-CKA-1229-600-L3-N-DUAL_radiance_img_surfrad-rect_subset.bsq")
-radiance_1242_350 <- brick("Erfassung_PhÃ¤notypen2021/HyPlant data/12:42/20180629-CKA-1242-350-L2-E-DUAL_radiance_img_surfrad-rect_subset.bsq")
+radiance_1229_600 <- brick("Erfassung_Phänotypen2021/HyPlant data/12_29/20180629-CKA-1229-600-L3-N-DUAL_radiance_img_surfrad-rect_subset.bsq")
+radiance_1242_350 <- brick("Erfassung_Phänotypen2021/HyPlant data/12_42/20180629-CKA-1242-350-L2-E-DUAL_radiance_img_surfrad-rect_subset.bsq")
 
 # Plots & Attributes
 buffer = FALSE
-plots_1229 <- st_read("Erfassung_PhÃ¤notypen2021/Shapefiles/Barley_1229.shp")
-plots_1242 <- st_read("Erfassung_PhÃ¤notypen2021/Shapefiles/Barley_1242.shp")
+plots_1229 <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1229.shp")
+plots_1242 <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1242.shp")
 
-# Creating a buffer for a second run
-buffer <- TRUE
-plots_1229 <- sf::st_buffer(plots_1229, dist = -0.3, endCapStyle = "SQUARE")
-#write_sf(plots_1229, "Erfassung_PhÃ¤notypen2021/Shapefiles/Barley_1229_buffered_30_cm.shp")
-plots_1242 <- sf::st_buffer(plots_1242, dist = -0.3, endCapStyle = "SQUARE")
-#write_sf(plots_1242, "Erfassung_PhÃ¤notypen2021/Shapefiles/Barley_1242_buffered_30_cm.shp")
+
+########## buffer ##########
+
+# # Creating a buffer for a alternative run
+# buffer <- TRUE
+# plots_1229 <- sf::st_buffer(plots_1229, dist = -0.3, endCapStyle = "SQUARE")
+# # write_sf(plots_1229, "Erfassung_Phänotypen2021/Shapefiles/Barley_1229_buffered_30_cm.shp")
+# plots_1242 <- sf::st_buffer(plots_1242, dist = -0.3, endCapStyle = "SQUARE")
+# # write_sf(plots_1242, "Erfassung_Phänotypen2021/Shapefiles/Barley_1242_buffered_30_cm.shp")
+
+############################
+
 
 # Assign ID
 plots_1229 <- mutate(plots_1229, ID = seq(1:nrow(plots_1229)), .keep = "all")
 plots_1242 <- mutate(plots_1242, ID = seq(1:nrow(plots_1242)), .keep = "all")
-```
 
-#### Extract Values from top of canopy radiance map within the shape file filter weights
 
-```{r cache=TRUE}
+
+#### Methods
 ## Extract pixel values from radiance map within the shape file
 minimalistic_1229_raw <- raster::extract(radiance_1229_600, plots_1229, df = TRUE, weights = TRUE, normalizeWeights = FALSE)
 minimalistic_1242_raw <- raster::extract(radiance_1242_350, plots_1242, df = TRUE, weights = TRUE, normalizeWeights = FALSE)
 normal_1229_raw <- raster::extract(radiance_1229_600, plots_1229, df = TRUE, weights = TRUE, normalizeWeights = TRUE)
 normal_1242_raw <- raster::extract(radiance_1242_350, plots_1242, df = TRUE, weights = TRUE, normalizeWeights = TRUE)
-```
-
-#### Closing Cluster
-One should always close the Cluster at the end.
-```{r}
-endCluster()
-```
-
-```{r}
 # Filter for weights == 1 (cells fully within), no filter for normal approach
 minimalistic_1229_filtered <- filter(minimalistic_1229_raw, weight == 1)
 minimalistic_1242_filtered <- filter(minimalistic_1242_raw, weight == 1)
 normal_1229_filtered <- normal_1229_raw
 normal_1242_filtered <- normal_1242_raw
 
+
+
+#### Closing Cluster
+endCluster()
+
+
+
+#### Rename columns
 # Rename spectral columns to wavelength
 # Rename minimalistic 1229
 col_names_bands_1229_minimalistic <- head(colnames(minimalistic_1229_raw)[-1], -1)
@@ -125,12 +92,11 @@ wavelength = "[0-9][.][0-9]{6}"
 new_col_names_bands_1242_normal <- as.character(format(as.numeric(str_extract(pattern = wavelength, col_names_bands_1242_normal))*1000))
 new_col_names_bands_1242_normal <- append("ID", append(new_col_names_bands_1242_normal, "weight"))
 colnames(normal_1242_filtered) <- new_col_names_bands_1242_normal
-```
+
+
 
 #### Aggregate Cell Data
-WARNING: Data is multiplied 1000 to transform float values to integer. This explains negative values.
-
-```{r}
+# WARNING: Data is multiplied 1000 to transform float values to integer. This explains negative values.
 # Join raster data and plot data
 minimalistic_1229 <- left_join(minimalistic_1229_filtered, plots_1229, by = "ID")
 minimalistic_1242 <- left_join(minimalistic_1242_filtered, plots_1242, by = "ID")
@@ -152,14 +118,12 @@ minimalistic_1229_mean <- left_join(bands_mean_minimalistic_1229, plots_1229, by
 minimalistic_1242_mean <- left_join(bands_mean_minimalistic_1242, plots_1242, by = "PLOTID")
 normal_1229_mean <- left_join(bands_mean_normal_1229, plots_1229, by = "PLOTID")
 normal_1242_mean <- left_join(bands_mean_normal_1242, plots_1242, by = "PLOTID")
-```
 
-#### Prepare data  {.tabset}
-##### FloX
 
-```{r, results = 'markup'}
+### Preparations for the analysis
+#### FloX data
 # Import FloX data
-FloX <- read.csv("Erfassung_PhÃ¤notypen2021/FloX_FULL_Reflected_Radiance_180629_converted.csv", header = TRUE, check.names = FALSE)
+FloX <- read.csv("Erfassung_Phänotypen2021/FloX_FULL_Reflected_Radiance_180629_converted.csv", header = TRUE, check.names = FALSE)
 FloX$`datetime [UTC]` <- as.POSIXct(FloX$`datetime [UTC]`, tz = "UTC")
 FloX$`datetime [UTC]` <- with_tz(FloX$`datetime [UTC]`, "CET")
 FloX <- rename(FloX, datetime = `datetime [UTC]`)
@@ -191,12 +155,10 @@ spc_flox_df <- as.wide.df(spc_flox)
 colnames(spc_flox_df) <- append("PlotID", as.character(seq(390, 940, 1)))
 #spc_flox_df$PlotID <- paste0("flox_", as.character(spc_flox_df$PlotID)) 
 
-```
 
-##### Prepare Hyplant data
 
-```{r}
-# Filter datasets to only include plots that are also in the FloX data
+#### HyPlant data
+# Filter data sets to only include plots that are also in the FloX data
 bands_mean_minimalistic_1229 <- filter(bands_mean_minimalistic_1229, PLOTID %in% viable_flox$Plot)
 bands_mean_minimalistic_1242 <- filter(bands_mean_minimalistic_1242, PLOTID %in% viable_flox$Plot)
 bands_mean_normal_1229 <- filter(bands_mean_normal_1229, PLOTID %in% viable_flox$Plot)
@@ -244,13 +206,16 @@ spc_1242_normal_df <- as.wide.df(spc_1242_normal)
 colnames(spc_1242_normal_df) <- append("PlotID", as.character(seq(390, 940, 1)))
 #spc_1242_normal_df$PlotID <- paste0("normal_1242_", as.character(spc_1242_normal_df$PlotID)) 
 
-```
 
-  
-### Analysis
 
-#### Loading required libraries
-```{r}
+
+###########################################################################
+
+################################# Analysis ################################
+
+###########################################################################
+
+### Required libraries
 library(lubridate)
 library(readxl)
 library(hyperSpec)
@@ -258,11 +223,11 @@ library(factoextra)
 library(ggsignif)
 library(ggpubr)
 library(tidyverse)
-```
-  
-#### Spectral plots {.tabset}
-##### Raw FloX and HyPlant wavelength per plot {.active}
-```{r, results = 'markup'}
+library(knitr)
+
+
+
+### Spectral plots
 # FloX
 par(mar = c(5,6,3,1)+.1)
 plot(spc_flox [,,], "spcprctl5") #spcprctile
@@ -287,10 +252,10 @@ title(main="normal, 12:42 o'clock")
 mtext("Top-of-canopy radiance DUAL", outer=TRUE,  cex=1.2, line=1.5)
 
 
-#test <- spc_1229_normal / rowMeans(spc_1229_normal)
-#plot(test, "spcprctl5")
-#plot(spc_1229_normal, "spcprctl5")
-
+# test <- spc_1229_normal / rowMeans(spc_1229_normal)
+# plot(test, "spcprctl5")
+# plot(spc_1229_normal, "spcprctl5")
+# 
 # plot(spc_1229_minimalistic [,,])
 # plot(spc_1229_minimalistic_new [,,])
 # spc_1229_minimalistic_new@wavelength
@@ -298,45 +263,9 @@ mtext("Top-of-canopy radiance DUAL", outer=TRUE,  cex=1.2, line=1.5)
 # plot(spc_1229_minimalistic [,,], col = "red", add = TRUE)}
 # ggplot (as.long.df (spc_1229_minimalistic_new[1]), aes (x = .wavelength, y =spc)) + geom_line ()
 
-```
-
-##### Plots normalized against Flox
-```{r, results = 'markup'}
-# Overflight at 12:29 o'clock, minimalistic approach
-par(mar = c(4,6,1,0)+.1, mfrow = c(2,2), oma = c(1,1,4,1), yaxs = "r")
-plot(spc_flox - spc_1229_minimalistic [,,], "spcmeansd")
-title(main="minimalistic, 12:29 o'clock")
-
-# Overflight at 12:42 o'clock, minimalistic approach
-plot(spc_flox - spc_1242_minimalistic [,,], "spcmeansd")
-title(main="minimalistic, 12:42 o'clock")
-
-# Overflight at 12:29 o'clock, normal approach
-plot(spc_flox - spc_1229_normal [,,], "spcmeansd")
-title(main="normal, 12:29 o'clock")
-
-# Overflight at 12:42 o'clock, normal approach
-plot(spc_flox - spc_1242_normal [,,], "spcmeansd")
-title(main="normal, 12:42 o'clock")
-mtext("Top-of-canopy radiance DUAL\n(normalized against FloX)", outer=TRUE,  cex=1.1, line=1.2)
-
-#qplotspc(mean(spc_flox - spc_1229_minimalistic [,,]))+
-#  geom_ribbon(aes (ymin = mean + sd, ymax = mean - sd, y =  0, group = NA), alpha #= 0.25, data = as.t.df (mean_sd (spc_flox - spc_1229_minimalistic [,,])))
 
 
-# plot(spc_1229_minimalistic [,,])
-# plot(spc_1229_minimalistic_new [,,])
-# spc_1229_minimalistic_new@wavelength
-# {plot(spc_1229_minimalistic_raw [,,], col = "blue")
-# plot(spc_1229_minimalistic [,,], col = "red", add = TRUE)}
-# ggplot (as.long.df (spc_1229_minimalistic_new[1]), aes (x = .wavelength, y =spc)) + geom_line ()
-
-```
-
-#### Check extracted pixel count per Plot {.tabset}
-
-##### Code
-```{r}
+### Checking pixel count per Plot
 # Create data frame with pixel count per plot
 frq_pixel_minimalistic_1229 <- rename(data.frame(table(minimalistic_1229$PLOTID)), PlotID = Var1)
 frq_pixel_minimalistic_1229$PlotID <- as.numeric(as.character(frq_pixel_minimalistic_1229$PlotID))
@@ -368,19 +297,17 @@ pixel_count_comparision <- rbind(frq_pixel_minimalistic_1229,
                                  frq_pixel_minimalistic_1242,
                                  frq_pixel_normal_1242)
 
-```
-##### Table
-```{r echo=FALSE, results='markup'}
+#### Table
 knitr::kable(rename(summarise(group_by(frq_pixel_minimalistic_1229, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c', caption = "Minimalistic pixel extraction, 12:29 Uhr")
 knitr::kable(rename(summarise(group_by(frq_pixel_minimalistic_1242, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c', caption = "Minimalistic pixel extraction, 12:42 Uhr")
 knitr::kable(rename(summarise(group_by(frq_pixel_normal_1229, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c',
              caption = "Normal pixel extraction, 12:29 Uhr")
 knitr::kable(rename(summarise(group_by(frq_pixel_normal_1242, Freq, Plots), "Occurrences" = n()), "Pixel per plot" = Freq), align = 'c',
              caption = "Normal pixel extraction, 12:42 Uhr")
-```
-##### Plot {.active}
-Occurrences of pixel count per plot within big and small plots
-```{r echo=FALSE, results='markup', message=FALSE}
+
+
+
+
 # Creating plots
 measurement.labs <- c("low resolution (1m x 1m)", "high resolution (0.5m x 1m)")
 names(measurement.labs) <- c("1229", "1242")
@@ -404,12 +331,11 @@ pixel_count <- ggplot(pixel_count_comparision, aes(x = Freq, fill = approach))+
 if (buffer == FALSE){
   ggsave(plot = pixel_count, filename = "images/pixel_count.png", height = 4, width = 7)
 }else{
-    ggsave(plot = pixel_count, filename = "images/pixel_count_buffered.png", height = 4, width = 7)
+  ggsave(plot = pixel_count, filename = "images/pixel_count_buffered.png", height = 4, width = 7)
 }
-```
 
-<!--Warning mechanism if any Plots don't have a single pixel -->
-```{r, echo=FALSE, results='asis'}
+pixel_count
+
 # Check and print plots with no pixels being extracted
 diff = setdiff(unique(minimalistic_1229$ID), seq(1:nrow(plots_1229)))
 if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plots in minimalistic at 12:29 o'clock: ", diff))
@@ -419,81 +345,12 @@ diff = setdiff(unique(normal_1229$ID), seq(1:nrow(plots_1229)))
 if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plots:  in normal at 12:29 o'clock:", diff))
 diff = setdiff(unique(normal_1242$ID), seq(1:nrow(plots_1242)))
 if(!is_empty(diff)) print(paste0("WARNING: No pixel extracted for following plots in normal at 12:42 o'clock: ", diff))
-```
-
-<!--
-# Question: How are smaller pixels (caused by rectification) are handled? Do they count on there own? Or are they part of another pixel?
-# Or does the Picture has unequal pixels in it?
--->
 
 
-#### Principal Conponent Analysis (PCA) {.tabset}
-The idea is to reduce the data in their dimensions and detect where the largest variation lies. By comparing the principal components of the FloX and the HyPlant we can detect whether both sensors captured the same variation and which approach is best suited for data extraction.
 
-##### Single datasets {.tabset}
-###### Code
-```{r}
-pca_flox <- prcomp(spc_flox, scale = TRUE)
-pca_1229_minimalistic <- prcomp(spc_1229_minimalistic, scale = TRUE)
-pca_1229_normal <- prcomp(spc_1229_normal, scale = TRUE)
-pca_1242_minimalistic <- prcomp(spc_1242_minimalistic, scale = TRUE)
-pca_1242_normal <- prcomp(spc_1242_normal, scale = TRUE)
-```
-###### FloX eigenvalues {.active} 
-```{r}
-fviz_eig(pca_flox, title = "PCA: FloX", addlabels = TRUE)
-# fviz_pca_ind(pca_flox,
-#              col.ind = "cos2", # Colour by the quality of representation
-#              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-#              title = "PCA: FloX", # with quality of representation # Avoid text overlapping
-#              repel = TRUE     # Avoid text overlapping
-# )
-```
-###### Minimalistic, low resolution
-```{r}
-fviz_eig(pca_1229_minimalistic, title = "PCA: Low resolution, minimalistic", addlabels = TRUE)
-# fviz_pca_ind(pca_1229_minimalistic,
-#              col.ind = "cos2", # Colour by the quality of representation
-#              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-#              title = "PCA: Low resolution, minimalistic", # with quality of representation # Avoid text overlapping
-#              repel = TRUE     # Avoid text overlapping
-# )
-```
-###### Normal, low resolution
-```{r}
-fviz_eig(pca_1229_normal, title = "PCA: Low resolution, normal", addlabels = TRUE)
-# fviz_pca_ind(pca_1229_normal,
-#              col.ind = "cos2", # Colour by the quality of representation
-#              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-#              title = "PCA: Low resolution, normal", # with quality of representation # Avoid text overlapping
-#              repel = TRUE     # Avoid text overlapping
-# )
-```
-###### Minimalistic, high resolution
-```{r}
-fviz_eig(pca_1242_minimalistic, title = "PCA: High resolution, minimalistic", addlabels = TRUE)
-# fviz_pca_ind(pca_1242_minimalistic,
-#              col.ind = "cos2", # Colour by the quality of representation
-#              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-#              title = "PCA: High resolution, minimalistic", # with quality of representation # Avoid text overlapping
-#              repel = TRUE     # Avoid text overlapping
-# )
-```
-###### Normal, high resolution
-```{r}
-fviz_eig(pca_1242_normal, title = "PCA: High resolution, normal", addlabels = TRUE)
-# fviz_pca_ind(pca_1242_normal,
-#              col.ind = "cos2", # Colour by the quality of representation
-#              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-#              title = "PCA: High resolution, normal", # with quality of representation # Avoid text overlapping
-#              repel = TRUE,    # Avoid text overlapping
-#              addEllipsis = TRUE
-# )
-```
 
-##### All datasets combined {.active .tabset}
-###### Code
-```{r}
+### Principal Component Analysis
+#### All data sets combined
 # Add columns to group data for later on
 # FloX
 spc_flox_df <- mutate(spc_flox_df, measurement = "flox", approach = "flox", .after = "PlotID")
@@ -511,7 +368,7 @@ spc_1229_normal_df <- mutate(spc_1229_normal_df, comb = paste0(approach, "_", me
 spc_1242_normal_df <- mutate(spc_1242_normal_df, measurement = "1242", approach =  "normal", .after = PlotID)
 spc_1242_normal_df <- mutate(spc_1242_normal_df, comb = paste0(approach, "_", measurement, "_", PlotID), .before = "PlotID")
 
-# Create one dataset per PCA
+# Create one data set per PCA
 if(buffer == FALSE){
   pca_data_all <- rbind(spc_flox_df, spc_1229_minimalistic_df, spc_1229_normal_df, spc_1242_minimalistic_df, spc_1242_normal_df)
   pca_data_all <- mutate(pca_data_all, buffer = FALSE, .after = approach)
@@ -530,36 +387,34 @@ pca_data_all <- rbind(data_for_pca, filter(data_for_pca_buffered, !(measurement 
 rownames(pca_data_all) = make.names(pca_data_all[,1], unique=TRUE)
 pca_all <- prcomp(pca_data_all[,-c(1:5)], scale = TRUE)
 #summary(pca_all)
-```
 
-###### Eigenvalues 
 
-```{r}
+
+##### Eigenvalues 
 pca_eigen <- fviz_eig(pca_all, title = "PCA: all", addlabels = TRUE)
 ggsave(plot = pca_eigen, filename = "images/pca_eigen.png", height = 5, width = 7)
 pca_eigen
-```
 
-###### Individuals {.active}
 
-```{r}
+
+##### Individuals
 annotation <- as.character(factor(paste0(pca_data_all$approach, "_", pca_data_all$buffer), levels = c("flox_FALSE", "minimalistic_FALSE",  "minimalistic_TRUE", "normal_FALSE", "normal_TRUE"), labels = c("FloX", "Minimalistic", "Minimalistic", "Weighted", "Weighted")))
 pca_ind <- fviz_pca_ind(pca_all,
-             habillage = annotation,
-             col.ind = pca_data_all$PlotID,
-             label = "ind.sup",
-             palette = "lanct",
-             geom.ind = "point",
-             addEllipses = TRUE,
-             ggtheme = theme_minimal()
-             )
+                        habillage = annotation,
+                        col.ind = pca_data_all$PlotID,
+                        label = "ind.sup",
+                        palette = "lanct",
+                        geom.ind = "point",
+                        addEllipses = TRUE,
+                        ggtheme = theme_minimal()
+)
 ggsave(plot = pca_ind, filename = "images/pca_ind.png", height = 5, width = 7)
 pca_ind
-```
 
-##### Calculating coordinates
-Now we are going to calculate the distance between the pca coordinates (2 dimensions) and each set.
-```{r}
+
+
+
+#### Calculating coordinates
 # Get coordinates of the individuals in the first two dimensions
 res.ind <- get_pca_ind(pca_all)
 coor_all <- res.ind$coord
@@ -628,11 +483,12 @@ for(i in c(FALSE, TRUE)){
 }
 
 write.csv(distance_comparision, file = "results/distance_comparison.csv", row.names = FALSE)
-```
 
-### Plotting score distance
 
-```{r}
+
+### Final analysis
+
+#### Loading all PCA results
 # Loading saved data from different runs.
 distance_comparision <- select(filter(read.csv("results/distance_comparison.csv"), buffer == FALSE), !buffer)
 distance_comparision$resolution <- factor(distance_comparision$resolution, levels = c("low", "high"))
@@ -640,48 +496,40 @@ distance_comparision_buffered <- filter(read.csv("results/distance_comparison.cs
 distance_comparision_buffered$resolution <- factor(distance_comparision_buffered$resolution, levels = c("low", "high"))
 comparison_distance_non_vs_buffered <- read.csv("results/distance_comparison.csv")
 comparison_distance_non_vs_buffered$buffer <- factor(comparison_distance_non_vs_buffered$buffer, levels = c(FALSE,TRUE), labels = c("non-buffered", "buffered"))
-```
 
 
-#### Test for normality
-```{r}
+
+#### Test for normality 
+
 # Unbuffered
-shapiro.test(filter(distance_comparision, resolution == "low" &
-                      approach == "minimalistic")$distance)
-shapiro.test(filter(distance_comparision, resolution == "low" &
-                      approach == "normal")$distance)
-shapiro.test(filter(distance_comparision, resolution == "high" &
-                      approach == "minimalistic")$distance)
-shapiro.test(filter(distance_comparision, resolution == "high" &
-                      approach == "normal")$distance)
+shapiro.test(filter(distance_comparision, resolution == "low" & approach == "minimalistic")$distance)
+shapiro.test(filter(distance_comparision, resolution == "low" & approach == "normal")$distance)
+shapiro.test(filter(distance_comparision, resolution == "high" & approach == "minimalistic")$distance)
+shapiro.test(filter(distance_comparision, resolution == "high" & approach == "normal")$distance)
 
 # Using buffered Data
-shapiro.test(filter(distance_comparision_buffered, resolution == "low" &
-                      approach == "minimalistic")$distance)
-shapiro.test(filter(distance_comparision_buffered, resolution == "low" &
-                      approach == "normal")$distance)
-shapiro.test(filter(distance_comparision_buffered, resolution == "high" &
-                      approach == "minimalistic")$distance)
-shapiro.test(filter(distance_comparision_buffered, resolution == "high" &
-                      approach == "normal")$distance)
-```
+shapiro.test(filter(distance_comparision_buffered, resolution == "low" & approach == "minimalistic")$distance)
+shapiro.test(filter(distance_comparision_buffered, resolution == "low" & approach == "normal")$distance)
+shapiro.test(filter(distance_comparision_buffered, resolution == "high" & approach == "minimalistic")$distance)
+shapiro.test(filter(distance_comparision_buffered, resolution == "high" & approach == "normal")$distance)
 
-##### One sided t-test to compare methods and resolutions with each other.
 
-```{r, results='markup', collapse=TRUE}
+
+
+#### One sided Wilcoxon-test
 
 distance_minimalistic_1229 <- distance_comparision[distance_comparision$resolution == "low"
-                                                  & distance_comparision$approach == "minimalistic",
-                                                  "distance"]
+                                                   & distance_comparision$approach == "minimalistic",
+                                                   "distance"]
 distance_minimalistic_1242 <- distance_comparision[distance_comparision$resolution == "high"
-                                                  & distance_comparision$approach == "minimalistic",
-                                                  "distance"]
+                                                   & distance_comparision$approach == "minimalistic",
+                                                   "distance"]
 distance_normal_1229 <- distance_comparision[distance_comparision$resolution == "low"
-                                                  & distance_comparision$approach == "normal",
-                                                  "distance"]
+                                             & distance_comparision$approach == "normal",
+                                             "distance"]
 distance_normal_1242 <- distance_comparision[distance_comparision$resolution == "high"
-                                                  & distance_comparision$approach == "normal",
-                                                  "distance"]
+                                             & distance_comparision$approach == "normal",
+                                             "distance"]
 print("Unbuffered data set")
 print("Comparison between extraction methods at low resolution:")
 t_test_min_norm_1229 <- t.test(distance_minimalistic_1229, distance_normal_1229, alternative = "less", conf.level = 0.95, paired = TRUE)
@@ -698,17 +546,17 @@ print(paste("p.value:", format(t_test_norm_1242_1229$p.value, format = "e", digi
 
 # Buffered data set
 distance_minimalistic_1229 <- distance_comparision_buffered[distance_comparision_buffered$resolution == "low"
-                                                  & distance_comparision_buffered$approach == "minimalistic",
-                                                  "distance"]
+                                                            & distance_comparision_buffered$approach == "minimalistic",
+                                                            "distance"]
 distance_minimalistic_1242 <- distance_comparision_buffered[distance_comparision_buffered$resolution == "high"
-                                                  & distance_comparision_buffered$approach == "minimalistic",
-                                                  "distance"]
+                                                            & distance_comparision_buffered$approach == "minimalistic",
+                                                            "distance"]
 distance_normal_1229 <- distance_comparision_buffered[distance_comparision_buffered$resolution == "low"
-                                                  & distance_comparision_buffered$approach == "normal",
-                                                  "distance"]
+                                                      & distance_comparision_buffered$approach == "normal",
+                                                      "distance"]
 distance_normal_1242 <- distance_comparision_buffered[distance_comparision_buffered$resolution == "high"
-                                                  & distance_comparision_buffered$approach == "normal",
-                                                  "distance"]
+                                                      & distance_comparision_buffered$approach == "normal",
+                                                      "distance"]
 print("Buffered data set")
 print("Comparison between extraction methods at low resolution:")
 t_test_min_norm_1229 <- t.test(distance_minimalistic_1229, distance_normal_1229, alternative = "less", conf.level = 0.95, paired = TRUE)
@@ -722,12 +570,16 @@ print(paste("p.value:", format(t_test_min_1242_1229$p.value, format = "e", digit
 print("Comparison between low and high resolution with normal extraction method:")
 t_test_norm_1242_1229 <- t.test(distance_normal_1242, distance_normal_1229, alternative = "less", conf.level = 0.95, paired = TRUE)
 print(paste("p.value:", format(t_test_norm_1242_1229$p.value, format = "e", digits = 2)))
-```
 
-#### Results {.tabset}
-##### Unbuffered data set 
-The first comparison is between the two extraction methods at different resolutions with the non-buffered data set. This can be considered the worst case for the weighted extraction method, as it includes pixels that are partially outside the plot. At the same time the minimalistic extraction method does only includes pixels completely inside, which is some kind of a buffer itself. Thus, in this scenario the difference in the score distance between the both extraction method is highly significant in at both resolutions, with the minimalistic method being closer to the reference value produced by FloX. One can see the clear trend by lines indicating the pairwise comparison.
-```{r, non-buffered-comp-method, echo=FALSE}
+
+
+###########################################################################
+
+################################# Results #################################
+
+###########################################################################
+
+### Unbuffered data set
 # Plotting the difference of the distances
 resolution.labs <- c("low resolution (1m x 1m)", "high resolution (0.5m x 1m)")
 names(resolution.labs) <- c("low", "high")
@@ -753,17 +605,8 @@ boxplot_comparison_approach <- ggplot(distance_comparision, aes(x = approach, y 
         strip.text = element_text(size = 12),
         panel.spacing = unit(1.5, "lines"))
 ggsave(plot = boxplot_comparison_approach, filename = "images/boxplot_comparison_approach.png", height = 5, width = 7)
-```
-
-```{r, fig.cap = "Comparison of the minimalistic and weighted extraction methods by using the score distance from FloX to each of the extraction methods of the coordinates of the first two principal components. Separated between the low and high resolution data set. Paired one-sided Wilcoxon test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 .", echo = FALSE}
 boxplot_comparison_approach
-```
-<div class = "fold s">
-```{r, non-buffered-comp-method, eval=FALSE}
-```
-</div>
-Using the high resolution (0.5 m x 1 m) data set instead of the low resolution (1 m x 1 m) data set does not improve the score distance for neither extraction method using the non-buffered plots. The score distance of the same points is sometimes bigger or smaller than its counterpart in the other data set. No clear Trend can be seen nor calculated. It is irrelevant which resolution we use regardless of the extraction method, when using the non-buffered plots.
-```{r, non-buffered-comp-res, echo=FALSE}
+
 # Plotting the difference of distances
 approach.labs <- c("minimalistic extraction method", "weighted extraction method")
 names(approach.labs) <- c("minimalistic", "normal")
@@ -790,20 +633,11 @@ boxplot_comparison_resolution <- ggplot(distance_comparision, aes(x = resolution
         panel.spacing = unit(1.5, "lines"))
 ggsave(plot = boxplot_comparison_resolution, filename = "images/boxplot_comparison_resolution.png", height = 5, width = 7)
 
-```
-
-```{r, fig.cap = "Comparison of the low and high resolution data sets by using the score distance from FloX to each of the resolutions with the coordinates of the first two principal components. Separated between the minimalistic and weighted extraction method. Paired one-sided Wilcoxon test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 .", echo = FALSE}
 boxplot_comparison_resolution
-```
-<div class = "fold s">
-```{r, non-buffered-comp-res, eval=FALSE}
-```
-</div>
 
-##### Buffered data set {.tabset}
-With the buffered plots the improvement of the minimalistic extraction method diminishes, at least with the low resolution (1 m x 1 m) data set. With a p-value of 0.019 one can only see a slight significant difference between the two extraction methods using a paired one-sided Wilcoxon test. Using the high resolution (0.5 m x 1 m) data set on the other hand greatly improves the score distance of the  minimalistic extraction method in comparison to the weighted extraction method. With a p-value of 0.00035 and a clear visual difference this is a great improvement. The minimalistic method also led to the lowest average score distance of any combination of data sets.
 
-```{r, buffered-comp-method, echo=FALSE}
+
+### Buffered data set
 # Plotting the difference of the distances
 resolution.labs <- c("low resolution (1m x 1m)", "high resolution (0.5m x 1m)")
 names(resolution.labs) <- c("low", "high")
@@ -829,19 +663,7 @@ boxplot_comparison_approach_buffered <- ggplot(distance_comparision_buffered, ae
         strip.text = element_text(size = 12, colour = "#941919"),
         panel.spacing = unit(1.5, "lines"))
 ggsave(plot = boxplot_comparison_approach_buffered, filename = "images/boxplot_comparison_approach_buffered.png", height = 5, width = 7)
-```
-
-```{r, fig.cap = "Comparison of the minimalistic and weighted extraction methods by using the score distance from FloX to each of the extraction methods of the coordinates of the first two principal components. Separated between the low and high resolution data set using the buffered plots. Paired one-sided Wilcoxon test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 .", echo = FALSE}
 boxplot_comparison_approach_buffered
-```
-<div class = "fold s">
-```{r, buffered-comp-method, eval=FALSE}
-```
-</div>
-
-Checking on a significant improvement of the high resolution (0.5 m x 1 m) data set over the lower one (1 m x 1 m) we can confirm, with a p-value of 0.012, a slightly positive reduction of the score distance with the minimalistic extraction method. The weighted extraction method does not show a significant reduction in score distance using the higher resolution data set and the buffered plots.
-
-```{r, buffered-comp-res, echo=FALSE}
 # Plotting the difference of the distances
 approach.labs <- c("minimalistic extraction method", "weighted extraction method")
 names(approach.labs) <- c("minimalistic", "normal")
@@ -867,19 +689,11 @@ boxplot_comparison_resolution_buffered <- ggplot(distance_comparision_buffered, 
         strip.text = element_text(size = 12, colour = "#941919"),
         panel.spacing = unit(1.5, "lines"))
 ggsave(plot = boxplot_comparison_resolution_buffered, filename = "images/boxplot_comparison_resolution_buffered.png", height = 5, width = 7)
-
-```
-
-```{r, fig.cap = "Comparison of the low and high resolution data sets by using the score distance from FloX to each of the resolutions with the coordinates of the first two principal components. Separated between the minimalistic and weighted extraction method using the buffered plots. Paired one-sided Wilcoxon test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 .", echo = FALSE}
 boxplot_comparison_resolution_buffered
-```
-<div class = "fold s">
-```{r, buffered-comp-res, eval=TRUE}
-```
-</div>
-##### Unbuffered vs. buffered 
-Using the buffered instead of the non-buffered plots reduced the score distance significantly for the weighted extraction method regardless of which resolution set was being used. For the minimalistic extraction method there was no significant improvement using buffered data with the low resolution data set. 
-```{r, buffered-non-buffered-low-res, echo=FALSE}
+
+
+
+### Unbuffered vs. buffered 
 # Plotting the difference of the distances
 approach.labs <- c("minimalistic extraction method", "weighted extraction method")
 names(approach.labs) <- c("minimalistic", "normal")
@@ -906,18 +720,7 @@ boxplot_comparison_non_vs_buffered_low_res <- ggplot(filter(comparison_distance_
         strip.text = element_text(size = 12),
         panel.spacing = unit(1.5, "lines"))
 ggsave(plot = boxplot_comparison_non_vs_buffered_low_res, filename = "images/boxplot_comparison_non_vs_buffered_low_res.png", height = 5, width = 7)
-```
-
-```{r, fig.cap = "Comparison of the non-buffered and buffered plots by using the score distance from FloX to each of the non-buffered and buffered plots with the coordinates of the first two principal components. Separated between the minimalistic and weighted extraction method using the low resolution data set. Paired one-sided Wilcoxon test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 .", echo = FALSE}
 boxplot_comparison_non_vs_buffered_low_res
-```
-<div class = "fold s">
-```{r, buffered-non-buffered-low-res, eval=FALSE}
-```
-</div>
-Using the high resolution data set on the other hand still let to a significant reduction of score distance even for the minimalistic extraction method. With the high resolution data set the score distance was always significantly improved by using the buffered plots.
-
-```{r, buffered-non-buffered-high-res, echo=FALSE}
 # Plotting the difference of the distances
 approach.labs <- c("minimalistic extraction method", "weighted extraction method")
 names(approach.labs) <- c("minimalistic", "normal")
@@ -944,12 +747,4 @@ boxplot_comparison_non_vs_buffered_high_res <- ggplot(filter(comparison_distance
         strip.text = element_text(size = 12),
         panel.spacing = unit(1.5, "lines"))
 ggsave(plot = boxplot_comparison_non_vs_buffered_high_res, filename = "images/boxplot_comparison_non_vs_buffered_high_res.png", height = 5, width = 7)
-```
-
-```{r, fig.cap = "Comparison of the non-buffered and buffered plots by using the score distance from FloX to each of the non-buffered and buffered plots with the coordinates of the first two principal components. Separated between the minimalistic and weighted extraction method using the high resolution data set. Paired one-sided Wilcoxon test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 .", echo = FALSE}
 boxplot_comparison_non_vs_buffered_high_res
-```
-<div class = "fold s">
-```{r, buffered-non-buffered-high-res, eval=FALSE}
-```
-</div>
