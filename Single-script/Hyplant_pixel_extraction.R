@@ -1,3 +1,15 @@
+# Explanation on using the following script
+#
+# 1.  You have to create an "image" and a "result" folder in the directory 
+#     where you want to run this script.
+#
+# 2.  You have to change the file path in the "brick" function below.
+#       We recommend using relative paths like we did.
+#
+# 3.  You have to run this script twice. (see "Buffer" section below)
+#       The first time with the "Buffer" section commented out and 
+#       a second time with the "Buffer" section uncommented.
+
 library(raster)
 library(sf)
 library(ggpubr)
@@ -27,7 +39,13 @@ plots_1229 <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1229.shp")
 plots_1242 <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1242.shp")
 
 
-########## buffer ##########
+
+########################################################################
+
+################################ buffer ################################
+
+########################################################################
+
 
 # # Creating a buffer for a alternative run
 # buffer <- TRUE
@@ -35,6 +53,7 @@ plots_1242 <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1242.shp")
 # # write_sf(plots_1229, "Erfassung_Phänotypen2021/Shapefiles/Barley_1229_buffered_30_cm.shp")
 # plots_1242 <- sf::st_buffer(plots_1242, dist = -0.3, endCapStyle = "SQUARE")
 # # write_sf(plots_1242, "Erfassung_Phänotypen2021/Shapefiles/Barley_1242_buffered_30_cm.shp")
+
 
 ############################
 
@@ -214,6 +233,7 @@ colnames(spc_1242_normal_df) <- append("PlotID", as.character(seq(390, 940, 1)))
 ################################# Analysis ################################
 
 ###########################################################################
+
 
 ### Required libraries
 library(lubridate)
@@ -573,11 +593,13 @@ print(paste("p.value:", format(t_test_norm_1242_1229$p.value, format = "e", digi
 
 
 
+
 ###########################################################################
 
 ################################# Results #################################
 
 ###########################################################################
+
 
 ### Unbuffered data set
 # Plotting the difference of the distances
