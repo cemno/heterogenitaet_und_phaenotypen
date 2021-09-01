@@ -311,7 +311,7 @@ Checking on a significant improvement of the high resolution (0.5 m x 1 m) data 
 
 <div class="figure" style="font-size:12px;font-style:italic">
 <span id="res-buff"></span>
-<img src="images/boxplot_comparison_approach.png" alt="...">
+<img src="images/boxplot_comparison_resolution_buffered.png" alt="...">
 <figcaption class="figure-caption text-left">
 fig. 3.2.2: Comparison of the low and high resolution data sets by using the score distance from FloX to each of the resolutions with the coordinates of the first two principal components. Separated between the minimalistic and weighted extraction method using the buffered plots. Paired one-sided Wilcoxon test, n = 15, p.value: * < 0.05, ** < 0.01, *** < 0.001 .
 </figcaption>
