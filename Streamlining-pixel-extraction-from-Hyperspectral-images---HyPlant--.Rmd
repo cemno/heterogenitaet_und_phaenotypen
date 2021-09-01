@@ -70,11 +70,11 @@ nocite: '@*'
   </p>
   
   <p>
-  Now you want to examine each plot for its reflectance in the morning, afternoon and evening. This would require specialized equipment such as the Field Snake (<a href="#fieldsnake">fig. 1.1.2</a>) or Fieldcop (<a href="#fieldcop">fig. 1.1.3</a>), which are excellent for measurements, but are very time intensive and need to be calibrated for variations between different plant species, e.g. different growth heights or plot sizes. Taking hyperspectral images during overflights with an aircraft eliminates the need to calibrate for different plant species, requires much less time to measure a larger area and has less impact on the test site. The data we are using is geo-referenced, so every measurement can be allocated to a location in the real world. The referenced data still needs to be geo-rectified, as the aircraft is not completely stable. This means that the measurements are orientated and assigned to a grid. 
+  Now you want to examine each plot for its reflectance in the morning, afternoon and evening. This would require specialized equipment such as the Field Snake (<a href="#fieldsnake">fig. 1.1.2</a>) or the Fieldcop (<a href="#fieldcop">fig. 1.1.3</a>), which are excellent for measurements, but are very time intensive and need to be calibrated for varying plot sizes or plant species, e.g. different growth heights. Taking hyperspectral images during overflights, with an aircraft, eliminates the need to calibrate for different plant species, requires much less time to measure a larger area and has less impact on the test site. The data we are using is geo-referenced, so every measurement can be allocated to a location in the real world. The referenced data still needed to be geo-rectified, as the aircraft is not completely stable. This means that the measurements are orientated and assigned to a grid. 
   </p>
   
   <p>
-  One disadvantage of using airborne imaging, or long range sensors for that matter, is the spectral distortion caused by the atmosphere between the sensor and the object. This noise can afterwards be reduced by atmospheric measurements taken temporal close to the overflights and by correction models. Another point for discussion might be the geo-rectification, as the "nearest neighbor" approach for assigning measurements to pixels was used. It assigns a the closest measurement to the nearest pixel. The benefit is, that only real, measured data gets assigned, but it could distort the image a little, if the nearest data is relatively far away.
+  One disadvantage of using airborne imaging, or long range sensors for that matter, is the spectral distortion caused by the atmosphere between the sensor and the object. This noise can afterwards be reduced by atmospheric measurements, taken temporal close to the overflights, and by correction models. The geo-rectification might be another point for discussion, as the "nearest neighbor" approach for assigning measurements to pixels was used. It assigns a measurement to the nearest pixel. The benefit is, that only real, measured data gets assigned, but it could distort the image a little, if the nearest data is further away.
   </p>
   
   <div class="figure" style="float:left;width:75%;height:75%;font-size:12px;" display="inline-block;">
@@ -108,16 +108,16 @@ nocite: '@*'
   </div>
 
   <p>
-  The [HyPlant aircraft](https://www.fz-juelich.de/ibg/ibg-2/EN/methods_jppc/HyPlant/_node.html) (<a href="#aircraft">fig. 1.2.1</a>) is an example of such an "airborne imaging spectrometer for vegetation monitoring", and the data obtained with it is the subject of the following project report.
+  The [HyPlant aircraft](https://www.fz-juelich.de/ibg/ibg-2/EN/methods_jppc/HyPlant/_node.html) (<a href="#aircraft">fig. 1.2.1</a>) is an example of such an "[...]airborne imaging spectrometer for vegetation monitoring[...]", and the data obtained with it is the subject of the following project report.
   </p>
   <p>
   It consists of two hyperspectral modules in a single housing, the DUAL and the FLUO module (<a href="#module">fig. 1.2.2</a>). The DUAL module, which we chose as the source for our images, has two sensors with a spectral range of 370 - 2500 nm. The first sensor has a spectral resolution of 3 - 10 nm in the VIS/NIR range and the second sensor has a resolution of 10 nm in the SWIR range.
   </p>
   <p>
-  The second module (FLUO) is used to detect the fluorescence of plants. It has to be much more accurate to detect narrow peaks in the relevant spectral range. Therefore, it was built to measure with a resolution of 0.25 nm and a much smaller range of 670 - 780 nm.
+  The second module (FLUO) is used to detect the fluorescence of plants. It has to be a lot more accurate to detect the narrow peaks in the relevant spectral range. Therefore, it was built to measure with a resolution of 0.25 nm and a much smaller range of 670 - 780 nm.
   </p>
   <p>
-  We decided to work with the data from the DUAL module as it was already atmospherically corrected. The data set also contained two different overflights at different altitudes. 
+  We decided to work with the data from the DUAL module, as it was already atmospherically corrected. The data set also contained two different overflights at different altitudes. 
   </p>
   
   <div class="figure" style="float:right;width:25%;height:25%;font-size:12px;" display="inline-block">
@@ -132,7 +132,7 @@ nocite: '@*'
   The first overflight took place at 12:29 at an altitude of 600 metres, the second at 12:42 at 350 metres. The lower overflight has a higher resolution, so from now on the overflights will be referred to as "high resolution" and "low resolution" (<a href="#high-low">fig. 1.2.3</a>).
   </p>
   <p>
-The main aspects of our project work are the implementation and usability of the R script. We investigated different ways to read, convert and analyse hyperspectral images, with the different ways to filter the image for relevant pixels. We called the different methods the "weighted method" and the "minimalist method". Furthermore, we have changed the pre-defined shapefile to also consider buffered plot borders.
+The main aspects of our project work are the implementation and usability of the R script. We investigated different ways to read, convert and analyse hyperspectral images, with different ways to filter the image for relevant pixels. We called the different filter variations the "weighted method" and the "minimalist method". Furthermore, we have changed the pre-defined shapefile to also consider buffered plot borders.
   </p>
 
 So at this point we have three different effects:
@@ -141,7 +141,7 @@ So at this point we have three different effects:
 * two different plot borders, the buffered and unbuffered and
 * two different extraction methods, the minimalistic and weighted.
 
-These effects result in eight data sets, which will be analysed in following chapters and compared in terms of accuracy.  The accuracy is based on the deviation from the ground measurements taken with the FloX module. The ground measurements was chosen as the reference, since they should have the least amount of noise. This is the case, because there was not a lot of space between the sensor and the object, causing spectral distortions.
+These effects result in eight data sets, which will be analysed in the following chapters and compared in terms of accuracy. The accuracy is based on the deviation from the ground measurements taken with the FloX module. The ground measurements were chosen as the reference, since they have the least amount of noise, because there was not a lot of space between the sensor and the object causing spectral distortions.
 \ 
   <div class="figure" style="width:70%;height:70%;font-size:12px;">
   <span style="display:block;" id="high-low"></span>
@@ -157,15 +157,15 @@ These effects result in eight data sets, which will be analysed in following cha
 
 ## Method
 
-### Extraction methods
+### Pixel extraction
 
 <div>
   <p>
-  The weighted and minimalistic method we created differ in the amount of extracted pixels.
+  The weighted and minimalistic method, we are comparing, differ in the amount of extracted pixels.
   
-  In more detail this means, that the weighted method extracts pixels that are at least with their centroid (centre point of the pixel) inside the plot border. While creating an average for the respective plot, it weights the pixels reflection information by the amount of pixel area inside the plot borders. This is meant to counter for the influence of pixels near the plot boundaries, which could contain reflection data from outside the plot, while still keeping the highest number of relevant pixels.
+  In more detail this means, that the weighted method extracts pixels that are at least with their centroid (centre point of the pixel) inside the plot border. While creating an average for the respective plot, it weights the pixels reflection information by the amount of pixel area inside the plot borders. This is meant to counter for the influence of pixels near the plot boundaries, which could contain reflection data from outside the plot and also to keep the highest possible number of pixels.
   
-  The minimalistic method extracts only pixels that are completely inside the plot. Our idea was to minimize the border effect as much as possible. A problem could be, that too many pixels are excluded through this harsh filter and one might argue that we won’t have enough data to make justified statements. But, considering the worst case, we still get <a href="#pixelcountbuffered">four pixels</a> at the bare minimum. We deemed this method as viable, since each pixel covers an area of one square meter and plants near the borders would be excluded from analysis any way.
+  The minimalistic method extracts only pixels that are completely inside the plot. Our idea was to minimize the border effect completely and only consider pixels that contain data referring to the plot. A problem could be, that too many pixels are excluded through this harsh filter and one might argue that we won’t have enough data to make justified statements in our analysis. But, considering the worst case, we still get <a href="#pixelcountbuffered">four pixels</a> at the bare minimum. We deemed this method as viable, since each pixel covers an area of one square meter and plants near the borders would be excluded from the analysis any way.
   
   <div class="figure" style="font-size:12px;">
   <span style="display:block;" id="high-low"></span>
@@ -178,10 +178,9 @@ These effects result in eight data sets, which will be analysed in following cha
   
   Since the weighted method doesn’t have a counter for the border effects, we
   created the second shapefile representing buffered plot borders. The 30 cm buffer 
-  zone is applied to all plot boundaries, which results in new plot areas of 
-  2.4 x 5.4 meters. This reduces the inclusion of non-representative pixels using 
-  the weighted method and reduces the pixel count we can expect for the 
-  minimalistic method to at least four, which was still deemed enough. 
+  zone is applied to all plot boundaries. This results in new plot areas of 
+  2.4 x 5.4 meters. This reduces the inclusion of non-representative pixels even
+  further.
   <br><br>
 
   <div class="figure" style="margin-left:auto;margin-right:auto;width:85%;height:85%;font-size:12px;">
@@ -205,10 +204,10 @@ These effects result in eight data sets, which will be analysed in following cha
 \ 
 
 
-### Preparations
+### Data preparations
 
 
-Now we know which pixels we are extracting, using the different methods on the data sets resulting from the different resolutions and plot boundaries. The next step is to create and apply a uniform format for all the data sets. This includes filtering for comparable data and resampling the spectrum ranges to the same spectral range and accuracy. The resampling is done through the <a href="https://cran.r-project.org/web/packages/hyperSpec/hyperSpec.pdf">`hyperSpec`</a> package. It uses a mix of interpolation and smoothing to create values for the new, desired wavelength range. We chose a range of 390 nm to 940 nm with 1 nm steps, as this range is covered by both the FloX data and the DUAL data.
+Now we know which pixels we are extracting, using the different methods on the data sets, resulting from the different resolutions and plot boundaries. The next step is to create and apply a uniform format for all the data sets. This includes filtering for comparable data and resampling the spectral ranges and accuracy to a norm. The resampling is done through the <a href="https://cran.r-project.org/web/packages/hyperSpec/hyperSpec.pdf">`hyperSpec`</a> package. It uses a mix of interpolation and smoothing to create values for the new, desired wavelength range. We chose a range of 390 nm to 940 nm with 1 nm steps, as this range is covered by both the FloX data and the DUAL data.
  
   <br>
   <div class="figure" style="float:right;width:51%;height:51%;font-size:12px;" display="inline-block">
@@ -231,7 +230,7 @@ Now we know which pixels we are extracting, using the different methods on the d
 After all the transmutations of our data sets, they are now uniform and ready to be analysed.
 
 
-We want to find out which method, in combination with the resolution and varying plot borders, is the closest to the actual ground measurements. For this purpose we want to consider all of our dimensions, such as the reflectance data for the different plots and each of the 550 wavelengths. We decided to do a principal component analysis (PCA), since this process would be extremely time consuming and heavy on the computational side, if done individually. 
+Through the analysis we want to find out which method, in combination with the different resolutions and varying plot borders, represents the actual ground measurements the best. For this purpose we want to consider all of our dimensions, such as the reflectance data for the different plots and each of the 550 wavelengths. We decided to do a <a href="#principal-component-analysis">principal component analysis</a> (PCA), since this process would be extremely time consuming and heavy on the computational side, if done individually. 
 
 \ 
 
@@ -261,16 +260,16 @@ fig. 2.3.2: Individuals of the PCA including data sets of the reference, both me
 </figcaption>
 </div>
 <br>
-The data is then separated back into the corresponding data set (combination of extraction method and resolution) and tested for normality using a Shapiro-Wilk test. The Null-hypothesis had to be rejected for some data sets while most of the data sets where close around the alpha level of 0.05. Thus we didn’t used the students t-test but the Wilcoxon signed-rank test, which is a non-parametric statistical hypothesis test. As we look at the same measurement using different methods, this test is a paired difference test.
+The data is then separated back into the corresponding data set (combination of extraction method and resolution) and tested for normality using a Shapiro-Wilk test. The Null-hypothesis had to be rejected for some data sets, while most of the data sets where close around the alpha level of 0.05. Thus we didn’t use the students t-test but the Wilcoxon signed-rank test, which is a non-parametric statistical hypothesis test. As we look at the same measurement using different methods, this test is a paired difference test.
 
-To compare the different methods, we test whether one variant has a lower score distance than the other one. It was tested, if the minimalistic method had a significant lower score distance than the weighted extraction method at both resolutions and if the higher resolution has a significant lower score distance than the low resolution data for each extraction method. The same test was applied to buffered data sets. The last test checked whether the buffered plots had a significant lower score distance than the non-buffered version, tested separately for each extraction method and resolution.
+To compare the different methods, we test whether one variant has a lower score distance than the other one. It was tested, if the minimalistic method had a significant lower score distance than the weighted extraction method at both resolutions and if the higher resolution has a significant lower score distance than the low resolution data for each extraction method. The same test was applied to the buffered data sets. The last test checked whether the buffered plots had a significant lower score distance than the non-buffered version. It was tested separately for each extraction method and resolution.
 \ 
 
 ## Results {.tabset}
 
 ### Unbuffered data set
 
-The first comparison is between the two extraction methods at different resolutions with the non-buffered data set. This can be considered the worst case for the weighted extraction method, as it includes pixels that are partially outside the plot. At the same time the minimalistic extraction method does only includes pixels completely inside, which is some kind of a buffer itself. Thus, in this scenario the difference in the score distance between the both extraction method is highly significant in at both resolutions, with the minimalistic method being closer to the reference value produced by FloX. One can see the clear trend by lines indicating the pairwise comparison.
+The first comparison is between the two extraction methods at different resolutions with the non-buffered data set. This can be considered the worst case for the weighted extraction method, as it includes pixels that are partially outside the plot. At the same time the minimalistic extraction method does only include pixels completely inside, which is a buffer in itself. Thus, in this scenario, the difference in the score distance between both extraction methods is highly significant for both resolutions. The minimalistic method being closer to the reference value produced by the FloX data. Looking at the dotted lines, indicating the pairwise comparison, one can see the clear trend.
 
 <!-- <a href="#method-unbuff">test</a> -->
 <div class="figure" style="font-size:12px;font-style:italic">
@@ -282,7 +281,7 @@ fig. 3.1.1: Comparison of the minimalistic and weighted extraction methods by us
 </div>
 \ 
 
-Using the high resolution (0.5 m x 1 m) data set instead of the low resolution (1 m x 1 m) data set does not improve the score distance for neither extraction method using the non-buffered plots. The score distance of the same points is sometimes bigger or smaller than its counterpart in the other data set. No clear Trend can be seen nor calculated. It is irrelevant which resolution we use regardless of the extraction method, when using the non-buffered plots.
+Using the high resolution (0.5 m x 1 m) data set, instead of the low resolution (1 m x 1 m) data set, does not improve the score distance for neither extraction method using the non-buffered plots. The score distance of the same points is sometimes bigger or smaller than its counterpart in the other data set. No clear Trend can be seen nor calculated. When using the non-buffered plots, it is irrelevant which resolution we use, regardless of the extraction method.
 
 <div class="figure" style="font-size:12px;font-style:italic">
 <span id="res-unbuff"></span>
@@ -296,7 +295,7 @@ fig. 3.1.2: Comparison of the low and high resolution data sets by using the sco
 
 ### Buffered data set
 
-With the buffered plots the improvement of the minimalistic extraction method diminishes, at least with the low resolution (1 m x 1 m) data set. With a p-value of 0.019 one can only see a slight significant difference between the two extraction methods using a paired one-sided Wilcoxon test. Using the high resolution (0.5 m x 1 m) data set on the other hand greatly improves the score distance of the  minimalistic extraction method in comparison to the weighted extraction method. With a p-value of 0.00035 and a clear visual difference this is a great improvement. The minimalistic method also led to the lowest average score distance of any combination of data sets.
+With the buffered plots the improvement of the minimalistic extraction method diminishes, at least with the low resolution (1 m x 1 m) data set. With a p-value of 0.019 one can only see a slight significant difference between the two extraction methods using a paired one-sided Wilcoxon test. Using the high resolution (0.5 m x 1 m) data set on the other hand greatly improves the score distance of the minimalistic extraction method in comparison to the weighted extraction method. With a p-value of 0.00035 and a clear visual difference this is a great improvement. The minimalistic method also led to the lowest average score distance of any combination of data sets.
 
 <div class="figure" style="font-size:12px;font-style:italic">
 <span id="method-buff"></span>
@@ -321,7 +320,7 @@ fig. 3.2.2: Comparison of the low and high resolution data sets by using the sco
 
 ### Unbuffered vs. buffered
 
-Using the buffered instead of the non-buffered plots reduced the score distance significantly for the weighted extraction method regardless of which resolution set was being used. For the minimalistic extraction method there was no significant improvement using buffered data with the low resolution data set.
+Using the buffered instead of the non-buffered plots reduced the score distance significantly for the weighted extraction method, regardless of which resolution set was being used. For the minimalistic extraction method there was no significant improvement, using buffered data with the low resolution data set.
 
 <div class="figure" style="font-size:12px;font-style:italic">
 <span id="low-buff-non"></span>
@@ -332,7 +331,7 @@ fig. 3.3.1: Comparison of the non-buffered and buffered plots by using the score
 </div>
 \ 
 
-Using the high resolution data set on the other hand still let to a significant reduction of score distance even for the minimalistic extraction method. With the high resolution data set the score distance was always significantly improved by using the buffered plots. 
+Using the high resolution data set on the other hand still led to a significant reduction of score distance even for the minimalistic extraction method. With the high resolution data set the score distance was always significantly improved, using the buffered plots. 
 
 <div class="figure" style="font-size:12px;font-style:italic">
 <span id="high-buff-non"></span>
@@ -359,17 +358,18 @@ The comparison between the low and high resolution data sets using the buffered 
 
 In the last comparison between the non-buffered and buffered data using different extraction methods and resolution data sets, an improvement by using the buffered plots can be seen (<a href="#results">fig. 3.3.1</a>). In almost all cases the improvement was highly significant but for the minimalistic extraction method using the low resolution data set. This correspond to the previous findings, that the minimalistic method already contains a “natural” buffer, due to all pixels having to be completely inside the plot borders. Thus the minimalistic method does not improve using an additional buffer with the low resolution data sets. It would be still recommended to use a buffered data set anyway, as the distance score can still improve if the data has a higher resolution (<a href="#results">fig. 3.3.2</a>).  The weighted extraction method improved in both cases, as the nature of this method always includes pixels near the plot border. So with every buffer the percentage of pixels at the centre of the plot increases. To take this even further, a bigger buffer could even result in a equal distance score as achieved by the minimalistic extraction method. 
 
-Looking at the results the similarities between both methods become obvious. It is possible that with the right buffer, the weighted method will catch up to the accuracy of the minimalistic extraction method. But the fundamental difference between these to methods its the minimalistic method is not weighting the pixels dependent on their coverage of the plot area. This makes all pixels equally important, as long as they are inside the plot. With the weighted method one could never achieve this, as even making the plot smaller, pixels completely inside the plot would be weighted based on their coverage of the strictly buffered area. To compensate the lack of pixels for the minimalistic extraction method one could also allow pixel that are mostly inside, such as covering 95% of the buffered plot area. 
+Looking at the results the similarities between both methods become obvious. It is possible that with the right buffer, the weighted method will catch up to the accuracy of the minimalistic extraction method. But the fundamental difference between these two methods is that the minimalistic method is not weighting the pixels dependent on their coverage of the plot area. This makes all pixels equally important, as long as they are inside the plot. With the weighted method one could never achieve this, as even making the plot smaller, pixels completely inside the plot would be weighted based on their coverage of the strictly buffered area. To compensate the lack of pixels for the minimalistic extraction method one could also allow pixel that are mostly inside, such as covering 95% of the buffered plot area. 
 
-Another problem was the geo-rectification. This process is especially important when trying to figure out if a pixel actually lies within a plot or not. As the “nearest neighbour” approach was chosen for the geo-rectification, it can happen, that pixels now inside the geo-rectified plot were originally measurement points covering mostly area outside the plots. This results in the need of only taking pixels as close to the centre of a plot as possible, which was shown by the improvements using buffered plots. So while improving the extraction method, using higher resolutions and buffering the data, there is also a potential of improvement by geo-rectify the measurements in a direction most suitable for the them and not facing the pixels strictly north. But this process starts way earlier in the processing pipe and thus was not tested in this project.
+Another problem was the geo-rectification. This process is especially important when trying to figure out if a pixel actually lies within a plot or not. As the “nearest neighbour” approach was chosen for the geo-rectification, it can happen that pixels now inside the geo-rectified plot were originally measurement points covering mostly area outside the plots. This results in the need of only taking pixels as close to the centre of a plot as possible, which was shown by the improvements using buffered plots. So while improving the extraction method, using higher resolutions and buffering the data, there is also a potential of improvement by geo-rectifying the measurements, in a direction most suitable for the them, and not facing the pixels strictly north. But this process starts way earlier in the processing pipe and thus was not tested in this project.
 
-The distance score is also a important factor in this project, as it was the sole metric being used to qualify the results. It is quite arbitrary due to the nature of the principle component analysis (PCA), which rearranges the dimensions to reduce the variability explained by each. This leads to a loss of scale and only comparisons between data  sets in the same PCA can be made. While claiming a lower difference between the reference data set produced by the FloX measurements and the HyPlant measurements is logical, absolute differences always help to understand the dimension of the improvements and put everything into perspective. It is also worth to consider different approaches to calculate the distance between the coordinates resulting from the PCA. Using the “Manhattan distance”, the absolute sum of the differences in both directions, for example, one could normalize the distance measurement based on the percentage of explained variability in each dimension. The approach using a PCA should thus be revised to handle some of its shortcomings, but at the same time it was a straight forward and efficient way to handle such multi-dimensional data, which is always a challenging task.
+The distance score is also a important factor in this project, as it was the sole metric being used to qualify the results. It is quite arbitrary due to the nature of the principle component analysis (PCA), which rearranges the dimensions to reduce the variability explained by each. This leads to a loss of scale and only comparisons between data  sets in the same PCA can be made. While claiming a lower difference between the reference data set, produced by the FloX measurements, and the HyPlant measurements is logical, absolute differences always help in understanding the dimension of the improvements and putting everything into perspective. It is also worth to consider different approaches to calculate the distance between the coordinates resulting from the PCA. Using the “Manhattan distance”, the absolute sum of the differences in both directions one could normalize the distance measurement based on the percentage of explained variability in each dimension. The approach using a PCA should thus be revised to handle some of its shortcomings, but at the same time it was a straight forward and efficient way to handle such multi-dimensional data, which is always a challenging task.
 \ 
 
 ## Conclusion
-Overall the new minimalistic extraction method showed promising results over the normally used weighted approach. It preselects pixel that are completely inside the plot boundaries and thus only picks the most centred pixels. At both resolutions and using buffered or non-buffered data the minimalistic method was either equal or better than the weighted one. The minimalistic extraction method could improve with the high resolution data set and also by using a buffer. A drawback of the method is the higher possibility of not getting enough or any pixel at all as the rules to select pixels are more strict. 
-The distance score is an interesting approach to reduce and calculate the hyperspectral data in an efficient way and seems to be reliable for such a comparison. It still can be further improved to account for the drawbacks that usually come with such dimension reduction, such as loss of absolute units for comparison or not being able to directly compare to results to different calculations.
-A topic for further research could be the automatically calculated optimal balance between the number of pixels and size of the buffer zone. While the number of pixels should be as large as possible, at the same time pixels further out bear the higher risk of being influenced by information not within the plots. This balancing act might be universally calculable for a specific sensor.
+
+Overall the new minimalistic extraction method showed promising results compared to the normally used weighted approach. It pre-selects pixels that are completely inside the plot boundaries and thus only picks the most centred pixels. At both resolutions and using buffered or non-buffered data the minimalistic method was either equal or better than the weighted one. The minimalistic extraction method improved using with the high resolution data set and also by using a buffer. A drawback of the method is the higher possibility of not getting enough, or any pixel at all, as the rules to select pixels are so strict. 
+The distance score. in combination with the PCA, is an interesting approach to reduce and calculate the hyperspectral data in an efficient way and seems to be reliable for such a comparison. It still can be further improved to account for the drawbacks that usually come with dimension reduction, such as loss of absolute units for comparison or not being able to directly compare to results of different calculations.
+A topic for further research could be the automatically calculated optimal balance between the number of pixels and size of the buffer zone. While the number of pixels should be as high as possible, at the same time pixels further out bear higher risk of being influenced by information not within the plots. This balancing act might be universally calculable for a specific sensor.
 \ 
 
 
