@@ -418,7 +418,7 @@ More information on that <a href="">here</a>
 <div class = "fold s">
 ```{r}
 require(snow)
-threads <- 7
+threads <- 4
 beginCluster(n = threads)
 rm(threads)
 ```
@@ -438,20 +438,23 @@ We also set the unused “ID” column in the shape file data frame to the numbe
 <div class = "fold s">
 ```{r}
 # Radiance Raster
-radiance_1229_600 <- brick("Erfassung_Phänotypen2021/HyPlant data/12_29/20180629-CKA-1229-600-L3-N-DUAL_radiance_img_surfrad-rect_subset.bsq")
-radiance_1242_350 <- brick("Erfassung_Phänotypen2021/HyPlant data/12_42/20180629-CKA-1242-350-L2-E-DUAL_radiance_img_surfrad-rect_subset.bsq")
+radiance_1229_600 <- brick("data/rasterfiles/20180629-CKA-1229-600-L3-N-DUAL_radiance_img_surfrad-rect_subset.TIF")
+radiance_1242_350 <- brick("data/rasterfiles/20180629-CKA-1242-350-L2-E-DUAL_radiance_img_surfrad-rect_subset.TIF")
 
 # Plots & Attributes
 buffer = FALSE
-plots_1229 <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1229.shp")
-plots_1242 <- st_read("Erfassung_Phänotypen2021/Shapefiles/Barley_1242.shp")
+plots_1229 <- st_read("data/shapefiles/Barley_1229.shp")
+plots_1242 <- st_read("data/shapefiles/Barley_1242.shp")
 
 # Creating a buffer for a second run
+# Uncomment this section on the second run
 #buffer <- TRUE
 #plots_1229 <- sf::st_buffer(plots_1229, dist = -0.3, endCapStyle = "SQUARE")
-#write_sf(plots_1229, "Erfassung_Phänotypen2021/Shapefiles/Barley_1229_buffered_30_cm.shp")
 #plots_1242 <- sf::st_buffer(plots_1242, dist = -0.3, endCapStyle = "SQUARE")
-#write_sf(plots_1242, "Erfassung_Phänotypen2021/Shapefiles/Barley_1242_buffered_30_cm.shp")
+
+# Writing new buffered shapefiles to disk if needed
+#write_sf(plots_1229, "data/shapefiles/Barley_1229_buffered_30_cm.shp")
+#write_sf(plots_1242, "data/shapefiles/Barley_1242_buffered_30_cm.shp")
 
 # Assign ID
 plots_1229 <- mutate(plots_1229, ID = seq(1:nrow(plots_1229)), .keep = "all")
@@ -588,7 +591,7 @@ We also build the FloX `hyperSpec` object and use it for resampling the data set
 <div class = "fold s">
 ```{r, results = 'markup', message=FALSE, warning=FALSE}
 # Import FloX data
-FloX <- read.csv("Erfassung_Phänotypen2021/FloX_FULL_Reflected_Radiance_180629_converted.csv", header = TRUE, check.names = FALSE)
+FloX <- read.csv("data/FloX_FULL_Reflected_Radiance_180629_converted.csv", header = TRUE, check.names = FALSE)
 FloX$`datetime [UTC]` <- as.POSIXct(FloX$`datetime [UTC]`, tz = "UTC")
 FloX$`datetime [UTC]` <- with_tz(FloX$`datetime [UTC]`, "CET")
 FloX <- rename(FloX, datetime = `datetime [UTC]`)
